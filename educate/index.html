@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html style="height:100%;">
+<head>
+  <title>Educate - Vaughan.Kitchen</title>
+  <link rel="stylesheet" type="text/css" href="static/normalize.css">
+  <style type="text/css">
+    .logo:link, .logo:visited, .logo:hover, .logo:active {
+      font-size: 42px;
+      font-weight: bold;
+      color: #000;
+      text-decoration: none;
+      line-height: 40px
+    }
+  </style>
+</head>
+<body style="height:100%;">
+  <div id="mockup" style="height:100%;"></div>
+  <script src="main.js"></script>
+  <script src="static/skulpt.min.js"></script>
+  <script src="static/skulpt-stdlib.js"></script>
+  <script type="text/javascript">
+    /*function input() {
+      return app.ports.prompt.send("null"), new Promise(function(a, b) {
+          a()
+      })
+    }*/
+    // Required by skulpt. Not sure what it does
+    function builtinRead(x) {
+        if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                throw "File not found: '" + x + "'";
+        return Sk.builtinFiles["files"][x];
+    }
+    var node = document.getElementById('mockup');
+    var app = Elm.Main.embed(node);
+    // Called from elm
+    app.ports.runcode.subscribe(function(code) {
+      //app.ports.output.send(code);
+      // input, output skulpt (sends it back to elm)
+      Sk.configure({output:app.ports.output.send, read:builtinRead});
+      // load
+      var myPromise = Sk.misceval.asyncToPromise(function() {
+          return Sk.importMainWithBody("<stdin>", false, code, true);
+      });
+      myPromise.then(function(mod) {
+        console.log('success');
+      },
+      function(err) {
+        // Send error messages as well
+        app.ports.output.send(err.toString());
+      });
+    });
+
+    // XXX quick and dirty hack.
+    // Replace with something that only operates on the correct textarea
+    app.ports.inserttab.subscribe(function() {
+      var textareas = document.getElementsByTagName('textarea');
+      var t = textareas[0];
+      var s = t.selectionStart;
+      app.ports.updatecode.send(
+        t.value.substring(0,t.selectionStart) + "\t" + t.value.substring(t.selectionEnd)
+      );
+    });
+  </script>
+</body>
+</html>
