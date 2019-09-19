@@ -1,0 +1,31 @@
+{
+	"name": "Manhattan",
+	"img": [
+		"Manhattan.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "Straight up",
+	"garnish": "Maraschino cherry",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Rye whiskey",
+			"measure": "5",
+			"unit": "cl"
+		},
+		{
+			"name": "Sweet red vermouth",
+			"measure": "2",
+			"unit": "cl"
+		},
+		{
+			"name": "Angostura bitters",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Stirred over ice, strained into a chilled glass, garnished, and served up."
+}

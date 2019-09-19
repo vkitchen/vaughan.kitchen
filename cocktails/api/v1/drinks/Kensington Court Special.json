@@ -1,0 +1,33 @@
+{
+	"name": "Kensington Court Special",
+	"img": [],
+	"lists": [
+    "Joe Gilmore"
+  ],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Passion Fruit juice",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+      "name": "Apricot Brandy",
+      "measure": "1",
+      "unit": "part"
+    },
+    {
+      "name": "Vodka",
+      "measure": "3",
+      "unit": "part"
+    }
+	],
+	"method": "Shake ingredients together with ice, and strain into a cocktail glass."
+}

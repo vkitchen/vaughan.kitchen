@@ -1,0 +1,31 @@
+{
+	"name": "Daiquiri",
+	"img": [
+		"Daiquiri.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "White rum",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "1.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Pour all ingredients into shaker with ice cubes. Shake well. Strain in chilled cocktail glass."
+}

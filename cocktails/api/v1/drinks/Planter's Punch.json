@@ -1,0 +1,51 @@
+{
+	"name": "Planter's Punch",
+	"img": [
+		"Planter's Punch.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "On the rocks",
+	"garnish": "Cherry, Pineapple slice",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Dark rum",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "3.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Pineapple juice",
+			"measure": "3.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "2",
+			"unit": "cl"
+		},
+		{
+			"name": "Grenadine",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Angostura bitters",
+			"measure": "3-4",
+			"unit": "dash"
+		}
+	],
+	"method": "Pour all ingredients, except the bitters, into shaker filled with ice. Shake well. Pour into large glass, filled with ice. Add Angostura bitters, \"on top\". Garnish with cocktail cherry and pineapple."
+}

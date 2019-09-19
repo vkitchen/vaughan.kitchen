@@ -1,0 +1,31 @@
+{
+	"name": "Brooklyn",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Cherry",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Rye or Canadian whisky",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Dry vermouth",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Maraschino liqueur",
+			"measure": "1/4",
+			"unit": "oz"
+		},
+		{
+			"name": "1/4 oz Amer Picon or a few dashes of Angostura bitters",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Stirred over ice, strained into a chilled glass, garnished, and served straight up."
+}

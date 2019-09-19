@@ -1,0 +1,28 @@
+{
+	"name": "Appletini",
+	"img": [
+		"Appletini.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Apple slice, cherry",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Apple schnapps / Calvados",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Cointreau",
+			"measure": "1.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Mix in a shaker, then pour into a chilled glass. Garnish and serve."
+}

@@ -1,0 +1,34 @@
+{
+	"name": "Tom Collins",
+	"img": [
+		"Tom Collins.jpg",
+		"Tom Collins 2.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lemon slice, Maraschino cherry",
+	"drinkware": "Collins glass",
+	"ingredients": [
+		{
+			"name": "Old Tom Gin",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Sugar syrup",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Soda water",
+			"measure": "6",
+			"unit": "cl"
+		}
+	],
+	"method": "Mix the gin, lemon juice and sugar syrup in a tall glass with ice, top up with soda water, garnish and serve."
+}

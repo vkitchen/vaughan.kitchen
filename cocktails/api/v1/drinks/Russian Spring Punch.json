@@ -1,0 +1,39 @@
+{
+	"name": "Russian Spring Punch",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Créme de Cassis",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Sparkling wine",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Pour the ingredients into an highball glass, top with Sparkling wine."
+}

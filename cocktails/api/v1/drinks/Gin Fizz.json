@@ -1,0 +1,36 @@
+{
+	"name": "Gin Fizz",
+	"img": [
+		"Gin Fizz.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "On the rocks",
+	"garnish": "Lemon slice",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Gomme syrup",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Soda water",
+			"measure": "8",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake all ingredients with ice cubes, except soda water. Pour into glass. Top with soda water."
+}

@@ -1,0 +1,21 @@
+{
+	"name": "Pink Gin",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Shave of lemon rind",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Plymouth gin",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Angostura Bitters",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Chill the glass, then coat the inside with the Bitters. Add the gin very well chilled, garnish and serve."
+}

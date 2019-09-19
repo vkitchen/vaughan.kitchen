@@ -1,0 +1,26 @@
+{
+	"name": "Rickey",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lime half shell",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Bourbon, Rye whiskey, or Gin",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Half of a lime squeezed and dropped in the glass",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "Sparkling mineral water",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Combine spirit, lime and shell in a highball or wine glass. Add ice, stir and then add sparkling mineral water."
+}

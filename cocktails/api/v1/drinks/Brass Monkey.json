@@ -1,0 +1,26 @@
+{
+	"name": "Brass Monkey",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Dark rum",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Vodka",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Stir together and serve over ice."
+}

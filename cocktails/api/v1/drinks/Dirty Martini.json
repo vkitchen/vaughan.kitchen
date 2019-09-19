@@ -1,0 +1,29 @@
+{
+	"name": "Dirty Martini",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "Olive",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "6",
+			"unit": "cl"
+		},
+		{
+			"name": "Dry vermouth",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Olive brine",
+			"measure": "1",
+			"unit": "splash"
+		}
+	],
+	"method": "Straight: Pour all ingredients into mixing glass with ice cubes. Stir well. Strain in chilled martini cocktail glass. Squeeze oil from lemon peel onto the drink, or garnish with olive."
+}

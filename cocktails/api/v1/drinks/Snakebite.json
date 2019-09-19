@@ -1,0 +1,21 @@
+{
+	"name": "Snakebite",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Pint glass",
+	"ingredients": [
+		{
+			"name": "Beer",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Cider",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Mix in equal volumes in a standard pint glass"
+}

@@ -1,0 +1,26 @@
+{
+	"name": "Havana Cooler",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Rum",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Mint",
+			"measure": "1",
+			"unit": "sprig"
+		},
+		{
+			"name": "Ginger ale",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Muddle rum with mint. Add ice and top with ginger ale"
+}

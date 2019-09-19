@@ -1,0 +1,28 @@
+{
+	"name": "Nixon",
+	"img": [],
+	"lists": [
+    "Joe Gilmore"
+  ],
+	"serve": "On the rocks",
+	"garnish": "A slice of peach and a cherry",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Bourbon",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Sloe gin",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+      "name": "Peach bitters",
+      "measure": "2",
+      "unit": "dash"
+    }
+	],
+	"method": "Stir and serve on the rocks, garnish."
+}

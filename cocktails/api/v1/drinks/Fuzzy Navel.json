@@ -1,0 +1,26 @@
+{
+	"name": "Fuzzy Navel",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Orange slice",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Peach schnapps",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "4",
+			"unit": "part"
+		}
+	],
+	"method": "Add all ingredients to a highball glass. Stir."
+}

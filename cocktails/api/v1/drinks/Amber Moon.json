@@ -1,0 +1,26 @@
+{
+	"name": "Amber Moon",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Whiskey or Vodka",
+			"measure": "3",
+			"unit": "oz"
+		},
+		{
+			"name": "Raw egg",
+			"measure": "1",
+			"unit": "none"
+		},
+		{
+			"name": "Tobasco sauce, to taste",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Crack an egg into a tall glass, leaving the yolk unbroken. Pour in whiskey. Add Tabasco to taste, or serve on the side."
+}

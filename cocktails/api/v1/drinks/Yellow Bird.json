@@ -1,0 +1,34 @@
+{
+	"name": "Yellow Bird",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "White rum",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Galliano",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Triple sec",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "1.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake and strain into a chilled cocktail glass"
+}

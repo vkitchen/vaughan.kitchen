@@ -1,0 +1,26 @@
+{
+	"name": "Black Russian",
+	"img": [
+		"Black Russian.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "5",
+			"unit": "cl"
+		},
+		{
+			"name": "Coffee liqueur",
+			"measure": "2",
+			"unit": "cl"
+		}
+	],
+	"method": "Pour the ingredients into an old fashioned glass filled with ice cubes. Stir gently."
+}

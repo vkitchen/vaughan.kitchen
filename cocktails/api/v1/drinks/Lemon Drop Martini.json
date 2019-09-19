@@ -1,0 +1,31 @@
+{
+	"name": "Lemon Drop Martini",
+	"img": [
+		"Lemon Drop Martini.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "Lemon slice",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Vodka citron",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Triple sec",
+			"measure": "2",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake and strain into a chilled cocktail glass rimmed with sugar."
+}

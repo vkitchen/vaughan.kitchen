@@ -1,0 +1,21 @@
+{
+	"name": "Yorsh",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Pint glass",
+	"ingredients": [
+		{
+			"name": "Beer",
+			"measure": "10",
+			"unit": "part"
+		},
+		{
+			"name": "Vodka",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Mix thoroughly and drink quickly."
+}

@@ -1,0 +1,23 @@
+{
+	"name": "Buck's Fizz",
+	"img": [
+		"Buck's Fizz.jpg"
+	],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "Orange twist",
+	"drinkware": "Champagne flute",
+	"ingredients": [
+		{
+			"name": "Orange juice",
+			"measure": "5",
+			"unit": "cl"
+		},
+		{
+			"name": "Champagne",
+			"measure": "10",
+			"unit": "cl"
+		}
+	],
+	"method": "Pour the orange juice into glass and top up Champagne. Stir gently, garnish and serve."
+}

@@ -1,0 +1,26 @@
+{
+	"name": "Bananarita",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Salt rimmed glass, lime slice",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Tequila",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "99 Bananas liqueur",
+			"measure": "1.5-2",
+			"unit": "oz"
+		},
+		{
+			"name": "Margarita mix",
+			"measure": "3.4",
+			"unit": "oz"
+		}
+	],
+	"method": "Fill the glass halfway (6oz.) with ice. Pour the tequila to the rim of the ice. Add the 99 Bananas liquor as well as the margarita mix; finish by adding the garnishes."
+}

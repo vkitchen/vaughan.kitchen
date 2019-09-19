@@ -1,0 +1,31 @@
+{
+	"name": "Moscow Mule",
+	"img": [
+		"Moscow Mule.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "Lime slice",
+	"drinkware": "Copper mug",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "0.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Ginger beer",
+			"measure": "12",
+			"unit": "cl"
+		}
+	],
+	"method": "Combine vodka and ginger beer in a highball glass filled with ice. Add lime juice. Stir gently. Garnish."
+}

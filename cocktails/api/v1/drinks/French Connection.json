@@ -1,0 +1,24 @@
+{
+	"name": "French Connection",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Cognac",
+			"measure": "3.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Disaronno liqueur",
+			"measure": "3.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Pour all ingredients directly into old fashioned glass filled with ice cubes. Stir gently."
+}

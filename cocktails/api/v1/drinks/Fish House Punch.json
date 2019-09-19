@@ -1,0 +1,41 @@
+{
+	"name": "Fish House Punch",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lemon slices",
+	"drinkware": "Punch bowl",
+	"ingredients": [
+		{
+			"name": "Sugar",
+			"measure": "1",
+			"unit": "cup"
+		},
+		{
+			"name": "Water",
+			"measure": "3 1/2",
+			"unit": "cup"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1 1/2",
+			"unit": "cup"
+		},
+		{
+			"name": "Jamaican amber rum",
+			"measure": "1",
+			"unit": "bottle"
+		},
+		{
+			"name": "Cognac",
+			"measure": "350",
+			"unit": "ml"
+		},
+		{
+			"name": "Peach brandy",
+			"measure": "60",
+			"unit": "ml"
+		}
+	],
+	"method": "Stir together sugar and 3½ cups water in a large bowl or pot until sugar is dissolved. Add lemon juice, rum, cognac, and brandy and chill, covered, at least 3 hours. Put half-gallon ice block in a punch bowl and pour punch over it."
+}

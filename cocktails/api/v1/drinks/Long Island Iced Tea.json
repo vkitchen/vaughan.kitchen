@@ -1,0 +1,56 @@
+{
+	"name": "Long Island Iced Tea",
+	"img": [
+		"Long Island Iced Tea.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "Lemon spiral",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Tequila",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Vodka",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "White rum",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Triple sec",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Gin",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Gomme syrup",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Cola",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Add all ingredients into highball glass filled with ice. Stir gently. Garnish with lemon spiral. Serve with straw."
+}

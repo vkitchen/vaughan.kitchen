@@ -1,0 +1,36 @@
+{
+	"name": "Pegu Club",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Lime twist",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Orange curaçao",
+			"measure": "3/4",
+			"unit": "oz"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "1",
+			"unit": "tsp"
+		},
+		{
+			"name": "Bitters",
+			"measure": "1",
+			"unit": "dash"
+		},
+		{
+			"name": "Orange bitters",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Shake ingredients together in a mixer with crushed ice. Strain into chilled glass, garnish and serve."
+}

@@ -1,0 +1,23 @@
+{
+	"name": "Kir Royal",
+	"img": [
+		"Kir Royal.jpg"
+	],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Champagne flute",
+	"ingredients": [
+    {
+			"name": "Champagne",
+			"measure": "9",
+			"unit": "cl"
+		},
+		{
+			"name": "Crème de Cassis",
+			"measure": "1",
+			"unit": "cl"
+		}
+	],
+	"method": "Add the crème de cassis to the bottom of the glass, then top up champagne."
+}

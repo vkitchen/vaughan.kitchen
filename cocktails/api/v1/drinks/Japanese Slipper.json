@@ -1,0 +1,28 @@
+{
+	"name": "Japanese Slipper",
+	"img": [
+		"Japanese Slipper.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Honeydew melon slice",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Midori",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Cointreau",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "3",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake together in a mixer with ice. Strain into glass, garnish and serve."
+}

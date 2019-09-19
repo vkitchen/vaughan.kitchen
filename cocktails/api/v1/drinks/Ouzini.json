@@ -1,0 +1,26 @@
+{
+	"name": "Ouzini",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Cyprus ouzo",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "7.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Bitters",
+			"measure": "2-4",
+			"unit": "drop"
+		}
+	],
+	"method": "Shake ouzo and fresh orange juice vigorously together, pour into glass over ice, and add dash of bitters. Garnish with a thin orange slice and serve."
+}

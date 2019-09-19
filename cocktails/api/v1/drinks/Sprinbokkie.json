@@ -1,0 +1,23 @@
+{
+	"name": "Springbokkie",
+	"img": [
+		"Springbokkie.jpg"
+	],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Shot glass",
+	"ingredients": [
+		{
+			"name": "Amarula",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Crème de menthe",
+			"measure": "3",
+			"unit": "part"
+		}
+	],
+	"method": "The Crème de menthe is poured into the shot glass and the Amarula is carefully layered on top."
+}

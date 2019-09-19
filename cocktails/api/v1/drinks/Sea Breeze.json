@@ -1,0 +1,31 @@
+{
+	"name": "Sea Breeze",
+	"img": [
+		"Sea Breeze.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "Lime slice",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "4",
+			"unit": "cl"
+		},
+		{
+			"name": "Cranberry juice",
+			"measure": "12",
+			"unit": "cl"
+		},
+		{
+			"name": "Grapefruit juice",
+			"measure": "3",
+			"unit": "cl"
+		}
+	],
+	"method": "Build all ingredients in a highball glass filled with ice. Garnish with lime wedge."
+}

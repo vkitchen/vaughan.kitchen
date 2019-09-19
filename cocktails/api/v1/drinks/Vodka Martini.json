@@ -1,0 +1,23 @@
+{
+	"name": "Vodka Martini",
+	"img": [
+		"Vodka Martini.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Olive or Lemon twist",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "6",
+			"unit": "cl"
+		},
+		{
+			"name": "Dry vermouth",
+			"measure": "1",
+			"unit": "cl"
+		}
+	],
+	"method": "Straight: Pour all ingredients into mixing glass with ice cubes. Stir well. Strain in chilled martini cocktail glass. Squeeze oil from lemon peel onto the drink, or garnish with olive."
+}

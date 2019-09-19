@@ -1,0 +1,36 @@
+{
+	"name": "Colombia",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka or Brandy",
+			"measure": "2",
+			"unit": "part"
+		},
+		{
+			"name": "Blue Curaçao",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Grenadine",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "6",
+			"unit": "part"
+		}
+	],
+	"method": "Shake the vodka and citrus juices in a mixer, then strain into the glass. Slide the grenadine down one side of the glass, where it will sink to the bottom. Slide the curacao down the other side, to lie between the vodka and grenadine, and serve before the layers have a chance to mix."
+}

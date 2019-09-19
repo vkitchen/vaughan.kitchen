@@ -1,0 +1,36 @@
+{
+	"name": "Pisco Sour",
+	"img": [
+		"Pisco Sour.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "Angostura bitters (1 dash)",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Pisco",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "2",
+			"unit": "cl"
+		},
+		{
+			"name": "Egg white",
+			"measure": "1",
+			"unit": "none"
+		}
+	],
+	"method": "Vigorously shake and strain contents in a cocktail shaker with ice cubes, then pour into glass and garnish with bitters."
+}

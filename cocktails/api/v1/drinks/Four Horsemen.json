@@ -1,0 +1,31 @@
+{
+	"name": "Four Horsemen",
+	"img": [],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Shot glass",
+	"ingredients": [
+		{
+			"name": "Bourbon whiskey",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+			"name": "Tennessee whiskey",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+			"name": "Scotch whisky",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+			"name": "Irish whiskey",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Mix the four spirits together into the shot glass, and down immediately."
+}

@@ -1,0 +1,39 @@
+{
+	"name": "Tuxedo",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "Straight up",
+	"garnish": "Maraschino cherry, Lemon zest",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Gin (Old Tom)",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Dry vermouth",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Maraschino",
+			"measure": "1/2",
+			"unit": "barspoon"
+		},
+		{
+			"name": "Absinthe",
+			"measure": "1/4",
+			"unit": "barspoon"
+		},
+		{
+			"name": "Orange bitters",
+			"measure": "3",
+			"unit": "dash"
+		}
+	],
+	"method": "Stir all ingredients with ice and strain into a cocktail glass. Garnish with a cherry and a twist of lemon zest."
+}

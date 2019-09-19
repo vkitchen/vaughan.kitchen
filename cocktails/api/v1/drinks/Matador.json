@@ -1,0 +1,26 @@
+{
+	"name": "Matador",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Lime slice or twist",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Silver tequila",
+			"measure": "1-1.5",
+			"unit": "part"
+		},
+		{
+			"name": "Pineapple juice",
+			"measure": "2-3",
+			"unit": "part"
+		},
+		{
+			"name": "Juice of half a lime",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Mix the ingredients in a shaker half full of ice. Strain and serve in a chilled cocktail glass or champagne flute."
+}

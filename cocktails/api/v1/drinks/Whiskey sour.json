@@ -1,0 +1,36 @@
+{
+	"name": "Whiskey sour",
+	"img": [
+		"Whiskey sour.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "On the rocks",
+	"garnish": "Maraschino cherry, Half orange slice",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Bourbon whiskey",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Gomme syrup",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Egg white (optional)",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Shake with ice. Strain into chilled glass, garnish and serve."
+}

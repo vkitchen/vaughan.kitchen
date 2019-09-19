@@ -1,0 +1,39 @@
+{
+	"name": "Barracuda",
+	"img": [],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Margarita glass",
+	"ingredients": [
+		{
+			"name": "Gold Rum",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Galliano",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Pineapple juice",
+			"measure": "6",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "1",
+			"unit": "dash"
+		},
+		{
+			"name": "Prosecco",
+			"measure": "1",
+			"unit": "top"
+		}
+	],
+	"method": "Shake ingredients with ice. Strain into glass, top with Sparkling wine."
+}

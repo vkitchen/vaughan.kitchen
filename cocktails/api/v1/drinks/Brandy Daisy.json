@@ -1,0 +1,31 @@
+{
+	"name": "Brandy Daisy",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Collins glass",
+	"ingredients": [
+		{
+			"name": "Brandy",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Yellow Chartreuse",
+			"measure": "3/4",
+			"unit": "oz"
+		},
+    {
+      "name": "Lemon juice",
+      "measure": "3/4",
+      "unit": "oz"
+    },
+    {
+      "name": "Soda water",
+      "measure": "1",
+      "unit": "splash"
+    }
+	],
+	"method": "Stir well with cracked ice in a cocktail shaker, then strain into a chilled Collins glass and top with a splash of chilled club soda or seltzer."
+}

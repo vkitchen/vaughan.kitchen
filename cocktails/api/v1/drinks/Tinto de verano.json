@@ -1,0 +1,23 @@
+{
+	"name": "Tinto de verano",
+	"img": [
+		"Tinto de verano.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lemon slice",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Red wine",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Lemonade soda",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Mix and serve well chilled."
+}

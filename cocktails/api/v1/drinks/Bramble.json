@@ -1,0 +1,36 @@
+{
+	"name": "Bramble",
+	"img": [
+		"Bramble.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "On the rocks",
+	"garnish": "Blackberry, Lemon slice",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "4",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Crème de Mure",
+			"measure": "1.5",
+			"unit": "cl"
+		}
+	],
+	"method": "Fill glass with crushed ice. Build gin, lemon juice and simple syrup over. Stir, and then pour blackberry liqueur over in a circular fashion to create marbling effect. Garnish with two blackberries and lemon slice."
+}

@@ -1,0 +1,31 @@
+{
+	"name": "Orange Tundra",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "25",
+			"unit": "ml"
+		},
+		{
+			"name": "Cream Soda",
+      "measure": "25",
+			"unit": "ml"
+		},
+		{
+			"name": "Kahlua",
+      "measure": "25",
+			"unit": "ml"
+		},
+		{
+			"name": "Orange juice",
+      "measure": "25",
+			"unit": "ml"
+		}
+	],
+	"method": "In a glass without stirring add in order: vodka, cream, soda, coffee liqueur, orange juice. Serve immediately"
+}

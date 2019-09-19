@@ -1,0 +1,28 @@
+{
+	"name": "Irish Car Bomb",
+	"img": [
+		"Irish Car Bomb.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "A pint glass and a shot glass",
+	"ingredients": [
+		{
+			"name": "Whiskey",
+			"measure": "1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Irish cream liqueur",
+			"measure": "1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Stout",
+			"measure": "1/2",
+			"unit": "pint"
+		}
+	],
+	"method": "The whiskey is floated on top of the Irish cream in a shot glass, and the shot glass is then dropped into the stout"
+}

@@ -1,0 +1,31 @@
+{
+	"name": "Vesper",
+	"img": [
+		"Vesper.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "Lemon peel",
+	"drinkware": "Champagne coupe",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "6",
+			"unit": "cl"
+		},
+		{
+			"name": "Vodka",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lillet Blanc",
+			"measure": "0.75",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake over ice until well chilled, then strain into a deep goblet and garnish with a thin slice of lemon peel."
+}

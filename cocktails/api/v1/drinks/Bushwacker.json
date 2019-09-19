@@ -1,0 +1,41 @@
+{
+	"name": "Bushwacker",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Maraschino cherry",
+	"drinkware": "Hurricane glass",
+	"ingredients": [
+		{
+			"name": "Dark rum",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Kahlúa",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Dark Crème de Cacao",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Cream of Coconut",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Milk or Half & Half",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Ice",
+			"measure": "1",
+			"unit": "cup"
+		}
+	],
+	"method": "Blend all the ingredients together in a blender, including the ice, and then strain into a hurricane glass. Place cherry on top of the drink as a garnish and serve. Whipped cream can also be added as a garnish to the top of the drink before the cherry."
+}

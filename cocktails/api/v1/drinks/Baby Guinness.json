@@ -1,0 +1,21 @@
+{
+	"name": "Baby Guinness",
+	"img": [],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Shot glass",
+	"ingredients": [
+		{
+			"name": "Coffee liqueur",
+			"measure": "3/4",
+			"unit": "shot"
+		},
+		{
+			"name": "Irish cream",
+			"measure": "1/4",
+			"unit": "shot"
+		}
+	],
+	"method": "Float Irish cream on top of coffee liqueur"
+}

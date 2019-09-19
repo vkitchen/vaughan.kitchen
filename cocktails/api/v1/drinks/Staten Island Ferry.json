@@ -1,0 +1,21 @@
+{
+	"name": "Staten Island Ferry",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Pineapple wedge",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Malibu",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Pineapple juice",
+			"measure": "1-3",
+			"unit": "part"
+		}
+	],
+	"method": "Stir together and serve over ice."
+}

@@ -1,0 +1,32 @@
+{
+	"name": "Americano",
+	"img": [
+		"Americano.jpg",
+		"Americano Highball.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "On the rocks",
+	"garnish": "Half an orange slice",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Campari",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Red Vermouth",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Soda Water",
+			"measure": "1",
+			"unit": "splash"
+		}
+	],
+	"method": "Pour the Campari and vermouth over ice into glass, add a splash of soda water and garnish with half orange slice."
+}

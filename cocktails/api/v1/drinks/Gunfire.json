@@ -1,0 +1,21 @@
+{
+	"name": "Gunfire",
+	"img": [],
+	"lists": [],
+	"serve": "Hot",
+	"garnish": "",
+	"drinkware": "Mug",
+	"ingredients": [
+		{
+			"name": "Black tea",
+			"measure": "1",
+			"unit": "cup"
+		},
+		{
+			"name": "Rum",
+			"measure": "50",
+			"unit": "ml"
+		}
+	],
+	"method": "Make the tea. Pour in rum and stir."
+}

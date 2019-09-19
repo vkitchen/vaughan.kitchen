@@ -1,0 +1,33 @@
+{
+	"name": "Moonwalk",
+	"img": [],
+	"lists": [
+    "Joe Gilmore"
+  ],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Wine glass",
+	"ingredients": [
+		{
+			"name": "Grapefruit juice",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Grand Marnier",
+			"measure": "1",
+			"unit": "part"
+		},
+    {
+      "name": "Rosewater",
+      "measure": "2",
+      "unit": "dash"
+    },
+    {
+      "name": "Champagne",
+      "measure": "0",
+      "unit": "none"
+    }
+	],
+	"method": "Shake well, strain into wine glass and top up with champagne."
+}

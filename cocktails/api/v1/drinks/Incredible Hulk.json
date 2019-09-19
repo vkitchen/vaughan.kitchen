@@ -1,0 +1,21 @@
+{
+	"name": "Incredible Hulk",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Hpnotiq",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Cognac",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Stir together and serve over ice."
+}

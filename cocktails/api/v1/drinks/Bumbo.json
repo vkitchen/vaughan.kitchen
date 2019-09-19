@@ -1,0 +1,36 @@
+{
+	"name": "Bumbo",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Nutmeg, Cinnamon",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Rum",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Water",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Sugar cubes",
+			"measure": "2",
+			"unit": "none"
+		},
+		{
+			"name": "Cinnamon",
+			"measure": "1/4",
+			"unit": "tsp"
+		},
+		{
+			"name": "Nutmeg",
+			"measure": "1/4",
+			"unit": "tsp"
+		}
+	],
+	"method": "Mix and garnish."
+}

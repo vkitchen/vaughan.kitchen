@@ -1,0 +1,28 @@
+{
+	"name": "Woo Woo",
+	"img": [
+		"Woo Woo.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lime wedge",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "2",
+			"unit": "part"
+		},
+		{
+			"name": "Peach Schnapps",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Cranberry juice",
+			"measure": "4",
+			"unit": "part"
+		}
+	],
+	"method": "Build all ingredients in a highball glass filled with ice. Garnish with lime wedge."
+}

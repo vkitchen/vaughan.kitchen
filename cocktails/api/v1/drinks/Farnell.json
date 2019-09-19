@@ -1,0 +1,21 @@
+{
+	"name": "Farnell",
+	"img": [],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lime wedge and a sprig of mint",
+	"drinkware": "Collins glass",
+	"ingredients": [
+		{
+			"name": "Jack Daniel's Tennessee Whiskey",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Lemonade",
+			"measure": "3",
+			"unit": "part"
+		}
+	],
+	"method": "Pour Jack Daniel's into Collins glass filled with ice. Fill to desired level with lemonade. Stir lightly and garnish with lime and mint."
+}

@@ -1,0 +1,61 @@
+{
+	"name": "Ramos Gin Fizz",
+	"img": [
+		"Ramos Gin Fizz.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Collins glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Cream",
+			"measure": "6",
+			"unit": "cl"
+		},
+		{
+			"name": "Egg white",
+			"measure": "1",
+			"unit": "none"
+		},
+		{
+			"name": "Orange blossom water",
+			"measure": "3",
+			"unit": "dash"
+		},
+		{
+			"name": "Vanilla extract",
+			"measure": "2",
+			"unit": "drop"
+		},
+		{
+			"name": "Soda water",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "All ingredients except the soda are poured in a mixing glass, dry shaken (no ice) for two minutes, then ice is added and shaken hard for another minute\n\nStrained into a highball glass without ice and topped with soda"
+}

@@ -1,0 +1,42 @@
+{
+	"name": "Mojito",
+	"img": [
+		"Mojito.jpg",
+		"Mojito Lowball.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "On the rocks",
+	"garnish": "Mint sprig, Lemon slice",
+	"drinkware": "Collins glass",
+	"ingredients": [
+		{
+			"name": "White rum",
+			"measure": "4",
+			"unit": "cl"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Mint sprigs",
+			"measure": "6",
+			"unit": "none"
+		},
+		{
+			"name": "Sugar",
+			"measure": "2",
+			"unit": "tsp"
+		},
+		{
+			"name": "Soda water",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Muddle mint leaves with sugar and lime juice. Add a splash of soda water and fill the glass with cracked ice. Pour the rum and top with soda water. Garnish and serve with straw."
+}

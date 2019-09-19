@@ -1,0 +1,31 @@
+{
+	"name": "Negroni",
+	"img": [
+		"Negroni.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "On the rocks",
+	"garnish": "Orange slice",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Sweet red vermouth",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Campari",
+			"measure": "3",
+			"unit": "cl"
+		}
+	],
+	"method": "Stir into glass over ice, garnish and serve."
+}

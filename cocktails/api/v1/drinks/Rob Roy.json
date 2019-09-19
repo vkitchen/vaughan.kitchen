@@ -1,0 +1,28 @@
+{
+	"name": "Rob Roy",
+	"img": [
+		"Rob Roy.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Two maraschino cherries on a skewer (standard version), or lemon twist (perfect and dry versions)",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Scotch whisky",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Sweet vermouth",
+			"measure": "2.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Angostura bitters",
+			"measure": "1",
+			"unit": "dash"
+		}
+	],
+	"method": "Stirred over ice, strained into a chilled glass, garnished, and served straight up, or mixed in rocks glass, filled with ice."
+}

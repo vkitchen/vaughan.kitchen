@@ -1,0 +1,46 @@
+{
+	"name": "Rum Swizzle",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Slice of orange and a cherry",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Black rum",
+			"measure": "4",
+			"unit": "oz"
+		},
+		{
+			"name": "Gold rum",
+			"measure": "4",
+			"unit": "oz"
+		},
+		{
+			"name": "Juice of 2 lemons",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "Pineapple juice",
+			"measure": "5",
+			"unit": "oz"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "5",
+			"unit": "oz"
+		},
+		{
+			"name": "Bermuda falernum",
+			"measure": "2",
+			"unit": "oz"
+		},
+		{
+			"name": "Angostura Bitters",
+			"measure": "6",
+			"unit": "dash"
+		}
+	],
+	"method": "Mix in pitcher with crushed ice, shake vigorously until a frothing head appears. Strain into cocktail glasses. Garnish with a slice of orange and a cherry. Serves 6."
+}

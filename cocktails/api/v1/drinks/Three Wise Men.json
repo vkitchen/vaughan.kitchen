@@ -1,0 +1,26 @@
+{
+	"name": "Three Wise Men",
+	"img": [],
+	"lists": [],
+	"serve": "Neat or On the rocks",
+	"garnish": "",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Scotch Whisky",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Tennessee Whiskey",
+			"measure": "1",
+			"unit": "part"
+		},
+		{
+			"name": "Bourbon Whiskey",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "Mix in an old fashioned glass"
+}

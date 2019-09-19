@@ -1,0 +1,31 @@
+{
+	"name": "Grasshopper",
+	"img": [
+		"Grasshopper.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Crème de menthe (green)",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Crème de cacao (white)",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Cream",
+			"measure": "3",
+			"unit": "cl"
+		}
+	],
+	"method": "Pour ingredients into a cocktail shaker with ice. Shake briskly and then strain into a chilled cocktail glass."
+}

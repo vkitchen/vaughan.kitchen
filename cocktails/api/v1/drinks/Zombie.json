@@ -1,0 +1,58 @@
+{
+	"name": "Zombie",
+	"img": [
+		"Zombie.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Mint sprig",
+	"drinkware": "Tiki mug",
+	"ingredients": [
+		{
+			"name": "Puerto Rican golden rum",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Jamaican rum",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Demerara 151 rum",
+			"measure": "1",
+			"unit": "oz"
+		},
+		{
+			"name": "Donn's Mix (2:1 grapefruit juice:cinnamon syrup)",
+			"measure": "1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Velvet Falernum",
+			"measure": "1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Lime juice",
+			"measure": "3/4",
+			"unit": "oz"
+		},
+		{
+			"name": "Grenadine",
+			"measure": "1/4",
+			"unit": "oz"
+		},
+		{
+			"name": "Absinthe",
+			"measure": "2",
+			"unit": "dash"
+		},
+		{
+			"name": "Angostura bitters",
+			"measure": "2",
+			"unit": "dash"
+		}
+	],
+	"method": "Mix ingredients other than the 151 in a shaker with ice. Pour into glass and top with the high-proof rum."
+}

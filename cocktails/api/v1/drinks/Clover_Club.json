@@ -1,0 +1,37 @@
+{
+	"name": "Clover Club",
+	"img": [
+		"Clover Club.jpg",
+		"Clover Club Coupe.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Unforgettables"
+	],
+	"serve": "Straight up",
+	"garnish": "Nutmeg",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "4.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Raspberry syrup",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Egg White",
+			"measure": "1",
+			"unit": "none"
+		}
+	],
+	"method": "Dry shake ingredients to emulsify, add ice, shake and served straight up."
+}

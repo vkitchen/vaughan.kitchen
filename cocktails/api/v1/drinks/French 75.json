@@ -1,0 +1,36 @@
+{
+	"name": "French 75",
+	"img": [
+		"French 75.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA Contemporary Classics"
+	],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Champagne flute",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "3",
+			"unit": "cl"
+		},
+		{
+			"name": "Simple syrup",
+			"measure": "2",
+			"unit": "dash"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Champagne",
+			"measure": "6",
+			"unit": "cl"
+		}
+	],
+	"method": "Combine gin, syrup, and lemon juice in a cocktail shaker filled with ice. Shake vigorously and strain into a chilled champagne glass. Top up with Champagne. Stir gently."
+}

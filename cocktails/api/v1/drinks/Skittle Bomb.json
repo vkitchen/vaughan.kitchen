@@ -1,0 +1,21 @@
+{
+	"name": "Skittle Bomb",
+	"img": [],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Pint glass",
+	"ingredients": [
+		{
+			"name": "Cointreau",
+			"measure": "1",
+			"unit": "shot"
+		},
+		{
+			"name": "Red Bull",
+			"measure": "1/2",
+			"unit": "can"
+		}
+	],
+	"method": "The Cointreau is poured into a shot glass, and the shot glass is then dropped into the Red Bull."
+}

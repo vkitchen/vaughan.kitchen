@@ -1,0 +1,16 @@
+{
+	"name": "Caju Amigo",
+	"img": [],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "Slice of cashew",
+	"drinkware": "Shot glass",
+	"ingredients": [
+		{
+			"name": "Cachaça",
+			"measure": "1",
+			"unit": "part"
+		}
+	],
+	"method": "The slice is placed on the tongue and chased by the shot of cachaça. Or the two ingredients are mixed in a shot glass and served straight."
+}

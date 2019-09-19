@@ -1,0 +1,28 @@
+{
+	"name": "Orgasm",
+	"img": [
+		"Orgasm.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Cherry",
+	"drinkware": "Old Fashioned glass",
+	"ingredients": [
+		{
+			"name": "Amaretto",
+			"measure": "3/4",
+			"unit": "oz"
+		},
+		{
+			"name": "Kahlúa",
+			"measure": "3/4",
+			"unit": "oz"
+		},
+		{
+			"name": "Baileys Irish Cream",
+			"measure": "3/4",
+			"unit": "oz"
+		}
+	],
+	"method": "Build all ingredients over ice in an old fashioned glass or shot glass."
+}

@@ -1,0 +1,23 @@
+{
+	"name": "Salty Dog",
+	"img": [
+		"Salty Dog.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Salted glass",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "4",
+			"unit": "cl"
+		},
+		{
+			"name": "Grapefruit juice",
+			"measure": "10",
+			"unit": "cl"
+		}
+	],
+	"method": "Shake gin and grapefruit juice in cocktail shaker. Strain into a salt-rimmed highball glass."
+}

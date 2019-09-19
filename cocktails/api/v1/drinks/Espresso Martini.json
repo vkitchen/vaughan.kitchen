@@ -1,0 +1,36 @@
+{
+	"name": "Espresso Martini",
+	"img": [
+		"Espresso Martini.jpg"
+	],
+	"lists": [
+		"IBA",
+		"IBA New Era Drinks"
+	],
+	"serve": "Straight up",
+	"garnish": "3 Coffee beans",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Vodka",
+			"measure": "5",
+			"unit": "cl"
+		},
+		{
+			"name": "Kahlúa",
+			"measure": "1",
+			"unit": "cl"
+		},
+		{
+			"name": "Sugar syrup",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "Ristretto",
+			"measure": "1",
+			"unit": "none"
+		}
+	],
+	"method": "Pour ingredients into shaker filled with ice, shake vigorously, and strain into chilled martini glass"
+}

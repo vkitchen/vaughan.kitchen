@@ -1,0 +1,23 @@
+{
+	"name": "Jägerbomb",
+	"img": [
+		"Jägerbomb.jpg"
+	],
+	"lists": [],
+	"serve": "Neat",
+	"garnish": "",
+	"drinkware": "Pint glass",
+	"ingredients": [
+		{
+			"name": "Red Bull",
+			"measure": "1",
+			"unit": "can"
+		},
+		{
+			"name": "Jägermeister",
+			"measure": "1",
+			"unit": "shot"
+		}
+	],
+	"method": "Pour red bull into pint glass half filling it. Drop a shot glass full of Jägermeister in"
+}

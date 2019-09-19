@@ -1,0 +1,43 @@
+{
+	"name": "Flaming Volcano",
+	"img": [
+		"Flaming Volcano.jpg"
+	],
+	"lists": [],
+	"serve": "Blended with ice",
+	"garnish": "Pineapple and/or orange quarter slices, maraschino cherries",
+	"drinkware": "Volcano bowl",
+	"ingredients": [
+		{
+			"name": "Light rum",
+			"measure": "30",
+			"unit": "ml"
+		},
+		{
+			"name": "Brandy",
+			"measure": "30",
+			"unit": "ml"
+		},
+		{
+			"name": "Overproof rum",
+			"measure": "30",
+			"unit": "ml"
+		},
+		{
+			"name": "Orange juice",
+			"measure": "120",
+			"unit": "ml"
+		},
+		{
+			"name": "Lemon juice",
+			"measure": "60",
+			"unit": "ml"
+		},
+		{
+			"name": "Orgeat syrup",
+			"measure": "60",
+			"unit": "ml"
+		}
+	],
+	"method": "Combine all ingredients except the overproof rum with 2 scoops of crushed ice in a blender, blend briefly, then pour into the \"volcano bowl\". Pour some overproof rum into the central crater of the volcano bowl and light it. For garnish score pineapple or orange slices with a knife and insert onto rim of bowl; optionally add maraschino cherries to the main drink. Multiply recipe to adjust to the size of the container (e.g. x2 for a 32-US-fluid-ounce (950 ml) volcano bowl)."
+}

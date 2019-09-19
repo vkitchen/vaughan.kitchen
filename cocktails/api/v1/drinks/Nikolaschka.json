@@ -1,0 +1,33 @@
+{
+	"name": "Nikolaschka",
+	"img": [
+		"Nikolaschka.jpg"
+	],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Snifter",
+	"ingredients": [
+		{
+			"name": "Cognac",
+			"measure": "1 1/2",
+			"unit": "oz"
+		},
+		{
+			"name": "Lemon disk",
+			"measure": "1",
+			"unit": "none"
+		},
+		{
+			"name": "Sugar",
+			"measure": "1",
+			"unit": "tsp"
+		},
+		{
+			"name": "Instant coffee",
+			"measure": "1",
+			"unit": "tsp"
+		}
+	],
+	"method": "Pour cognac into brandy snifter, place lemon disk across the top of the glass and top with sugar and coffee."
+}

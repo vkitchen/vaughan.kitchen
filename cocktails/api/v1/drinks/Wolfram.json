@@ -1,0 +1,33 @@
+{
+	"name": "Wolfram",
+	"img": [],
+	"lists": [
+    "Joe Gilmore"
+  ],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Gin",
+			"measure": "2",
+			"unit": "part"
+		},
+		{
+			"name": "Wolfschmidt Kummel",
+			"measure": "2",
+			"unit": "part"
+		},
+    {
+      "name": "Dry Vermouth",
+      "measure": "2",
+      "unit": "part"
+    },
+    {
+      "name": "Lemon juice",
+      "measure": "1",
+      "unit": "part"
+    }
+	],
+	"method": "Shake ingredients together with ice, and strain into a cocktail glass."
+}

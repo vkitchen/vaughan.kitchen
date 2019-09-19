@@ -1,0 +1,36 @@
+{
+	"name": "Agua de Valencia",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Orange juice",
+			"measure": "200",
+			"unit": "ml"
+		},
+		{
+			"name": "Gin",
+			"measure": "50",
+			"unit": "ml"
+		},
+		{
+			"name": "Vodka",
+			"measure": "50",
+			"unit": "ml"
+		},
+		{
+			"name": "Cava (Spanish wine)",
+			"measure": "700",
+			"unit": "ml"
+		},
+		{
+			"name": "Sugar",
+			"measure": "1",
+			"unit": "pinch"
+		}
+	],
+	"method": "Add all ingredients to a pitcher. Adjust sugar to taste. Refrigerate"
+}

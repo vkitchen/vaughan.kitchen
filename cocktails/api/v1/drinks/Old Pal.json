@@ -1,0 +1,26 @@
+{
+	"name": "Old Pal",
+	"img": [],
+	"lists": [],
+	"serve": "Straight up",
+	"garnish": "Lemon twist",
+	"drinkware": "Cocktail glass",
+	"ingredients": [
+		{
+			"name": "Rye whiskey",
+			"measure": "30",
+			"unit": "ml"
+		},
+		{
+			"name": "Dry vermouth",
+			"measure": "30",
+			"unit": "ml"
+		},
+		{
+			"name": "Campari",
+			"measure": "30",
+			"unit": "ml"
+		}
+	],
+	"method": "Mix the 3 ingredients in a mixing glass, and add ice. Stir to chill, and strain into a cocktail glass"
+}

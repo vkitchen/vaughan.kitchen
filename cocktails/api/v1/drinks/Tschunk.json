@@ -1,0 +1,33 @@
+{
+	"name": "Tschunk",
+	"img": [
+		"Tschunk.jpg"
+	],
+	"lists": [],
+	"serve": "On the rocks",
+	"garnish": "Lime slice",
+	"drinkware": "Highball glass",
+	"ingredients": [
+		{
+			"name": "Golden rum or dark rum",
+			"measure": "4-6",
+			"unit": "cl"
+		},
+		{
+			"name": "Limes",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "Brown sugar",
+			"measure": "0",
+			"unit": "none"
+		},
+		{
+			"name": "Club-Mate",
+			"measure": "0",
+			"unit": "none"
+		}
+	],
+	"method": "Dice limes and muddle with brown sugar in a highball. Add crushed ice and pour the rum over. Top with mate"
+}
