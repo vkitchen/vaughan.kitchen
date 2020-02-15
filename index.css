@@ -1,0 +1,112 @@
+/* using colours from kasugano terminal.sexy scheme */
+html, body {
+	height: 100%;
+}
+
+body {
+	color: #000;
+	background: #b10909;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+.wrapper {
+	height: 100%;
+}
+
+.left {
+	width: 30%;
+	height: 100%;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.content {
+	padding-left: 10px;
+}
+
+.center {
+	width: 20%;
+	height: 100%;
+	border-left: 1px solid #000;
+	margin-left: -1px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.right {
+	width: 50%;
+	height: 100%;
+	border-left: 1px solid #000;
+	margin-left: -1px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.right h1 {
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: #000;
+}
+
+a:hover {
+	color: #000;
+}
+
+.site-logo a {
+	color: #000;
+	font-size: 20em;
+	text-decoration: none;
+	margin-left: -50px;
+	border: 1px solid black;
+}
+
+.site-logo a:hover {
+	color: #000;
+}
+
+.site-search input {
+	border-radius: 0;
+	border: 1px solid #c8cacc;
+	background-color: #1b1b1b;
+	color: #edeff2;
+	margin: 0;
+	padding: 4px;
+}
+
+.site-search input::placeholder {
+	color: #c8cacc;
+}
+
+.site-search input[type=text] {
+	width: 180px;
+}
+
+.site-search input[type=submit] {
+	cursor: pointer;
+}
+
+/* some navi stuff */
+ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+li {
+	margin-top: 8px;
+	border-bottom: 1px solid black;
+	padding-left: 10px;
+	padding-right: 29%;
+	width: 100%;
+}
+
+.overlay {
+	position: absolute;
+	bottom: 120px;
+	right: -80px;
+}
