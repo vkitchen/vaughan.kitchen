@@ -12,7 +12,7 @@ body {
 }
 
 /* flash that body */
-#bodyflash {
+.flash {
 	animation-name: fade;
 	animation-duration: 4s;
 }
@@ -23,6 +23,32 @@ body {
 	}
 	to {
 		background-color: #fff;
+	}
+}
+
+.fade {
+	animation-name: out;
+	animation-duration: 3s;
+}
+
+@keyframes out {
+	100% {
+		opacity: 0;
+	}
+}
+
+.in {
+	animation-name: in;
+	animation-duration: 0.4s;
+	animation-iteration-count: 10;
+}
+
+@keyframes in {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
 	}
 }
 

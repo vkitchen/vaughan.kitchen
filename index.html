@@ -73,11 +73,35 @@ G:::::G        G::::G  E:::::E             N::::::N    N::::::::::N  E:::::E    
 		</div>
 		<script>
 function show_me_your_logic() {
+	var i;
 	// flash the body
-	document.getElementsByTagName('body')[0].id = 'bodyflash';
+	document.getElementsByTagName('body')[0].classList.add('flash');
+	var h4s = document.getElementsByTagName('h4');
+	var as = document.getElementsByClassName('nav')[0].getElementsByTagName('a');
+	for (i = 0; i < h4s.length; i++) {
+		h4s[i].classList.add('flash');
+	}
+	for (i = 0; i < as.length; i++) {
+		as[i].classList.add('flash');
+	}
 	setTimeout(function () {
-		document.getElementsByTagName('body')[0].id = '';
+		document.getElementsByTagName('body')[0].classList.remove('flash');
+		for (i = 0; i < h4s.length; i++) {
+			h4s[i].classList.remove('flash');
+		}
+		for (i = 0; i < as.length; i++) {
+			as[i].classList.remove('flash');
+		}
 	}, 2000);
+
+	// text
+	setTimeout(function () {
+		document.getElementsByClassName('a-developer')[0].classList.add('fade');
+	}, 500);
+
+	setTimeout(function () {
+		document.getElementsByClassName('a-developer')[0].classList.remove('fade');
+	}, 3000);
 
 	// image
 	setTimeout(function () {
@@ -108,6 +132,10 @@ function show_me_your_logic() {
 				break;
 		}
 		document.getElementsByClassName('modal')[0].classList.remove('none');
+		document.getElementsByClassName('modal')[0].classList.add('in');
+		setTimeout(function () {
+			document.getElementsByClassName('modal')[0].classList.remove('in');
+		}, 4000);
 	}, 2200);
 }
 
