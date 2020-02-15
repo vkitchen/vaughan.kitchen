@@ -1,4 +1,3 @@
-/* using colours from kasugano terminal.sexy scheme */
 html, body {
 	height: 100%;
 }
@@ -9,6 +8,22 @@ body {
 	margin: 0;
 	padding: 0;
 	overflow: hidden;
+	font-family: serif;
+}
+
+/* flash that body */
+#bodyflash {
+	animation-name: fade;
+	animation-duration: 4s;
+}
+
+@keyframes fade {
+	from {
+		background-color: #b10909;
+	}
+	to {
+		background-color: #fff;
+	}
 }
 
 .wrapper {
@@ -69,28 +84,48 @@ a:hover {
 	color: #000;
 }
 
+/* left column content */
+
+h3 {
+	font-size: 3em;
+}
+
+.a-developer {
+	font-size: 20em;
+	position: absolute;
+	left: 20px;
+	z-index: -4;
+}
+
 .site-search input {
-	border-radius: 0;
-	border: 1px solid #c8cacc;
-	background-color: #1b1b1b;
-	color: #edeff2;
+	border: 2px solid #000;
+	background-color: rgba(0, 0, 0, 0);
+	color: #000;
 	margin: 0;
 	padding: 4px;
 }
 
 .site-search input::placeholder {
-	color: #c8cacc;
+	color: #0a0a0a;
 }
 
 .site-search input[type=text] {
-	width: 180px;
+	width: 120px;
+	margin-right: -2px;
 }
 
 .site-search input[type=submit] {
+	font-weight: bold;
 	cursor: pointer;
 }
 
 /* some navi stuff */
+h4 {
+	margin-top: 24px;
+	margin-bottom: 20px;
+	background: #b10909;
+}
+
 ul {
 	list-style: none;
 	padding: 0;
@@ -98,15 +133,33 @@ ul {
 }
 
 li {
-	margin-top: 8px;
 	border-bottom: 1px solid black;
 	padding-left: 10px;
 	padding-right: 29%;
 	width: 100%;
 }
 
+li + li {
+	margin-top: 8px;
+}
+
+li a {
+	background: #b10909;
+}
+
 .overlay {
 	position: absolute;
 	bottom: 120px;
 	right: -80px;
+}
+
+.modal {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.none {
+	display: none;
 }

@@ -9,10 +9,11 @@
 		<div class="wrapper">
 			<div class="left">
 				<div class="content">
+					<h3 class="a-developer">(dev) (developer) (developeroni)</h3>
 					<h3>(a developer in pretend)</h3>
-					<form class="site-search" action="/cgi/search.sh" method="get">
-						<input type="text" name="search" placeholder="Rummage my stuff...">
-						<input type="submit" value="Search">
+					<form class="site-search" action="/cgi-bin/search" method="get">
+						<input type="text" name="search" placeholder="Go on..."><!--
+						--><input type="submit" value="Rummage">
 					</form>
 
 					<p>
@@ -31,6 +32,16 @@
 					<ul>
 						<li>: <a href="connect4.html">Connect 4</a></li>
 						<li>: <a href="educate">Learn to Program</a></li>
+					</ul>
+					<h4>::NAVI OF NOT::</h4>
+					<ul>
+						<li>: <a href="#and" onclick="show_me_your_logic()">AND</a></li>
+						<li>: <a href="#or" onclick="show_me_your_logic()">OR</a></li>
+						<li>: <a href="#xor" onclick="show_me_your_logic()">XOR</a></li>
+						<li>: <a href="#not" onclick="show_me_your_logic()">NOT</a></li>
+						<li>: <a href="#nand" onclick="show_me_your_logic()">NAND</a></li>
+						<li>: <a href="#nor" onclick="show_me_your_logic()">NOR</a></li>
+						<li>: <a href="#xnor" onclick="show_me_your_logic()">XNOR</a></li>
 					</ul>
 				</div>
 			</div><!--
@@ -57,5 +68,54 @@ G:::::G        G::::G  E:::::E             N::::::N    N::::::::::N  E:::::E    
      GGG::::::GGG:::GE::::::::::::::::::::EN::::::N        N::::::NE::::::::::::::::::::ER::::::R     R:::::RI::::::::I   CCC::::::::::::C      A:::::A                 A:::::A R::::::R     R:::::R      T:::::::::T      
         GGGGGG   GGGGEEEEEEEEEEEEEEEEEEEEEENNNNNNNN         NNNNNNNEEEEEEEEEEEEEEEEEEEEEERRRRRRRR     RRRRRRRIIIIIIIIII      CCCCCCCCCCCCC     AAAAAAA                   AAAAAAARRRRRRRR     RRRRRRR      TTTTTTTTTTT      
 		</pre>
+		<div class="modal none">
+			<img id="logic" alt="Something logical">
+		</div>
+		<script>
+function show_me_your_logic() {
+	// flash the body
+	document.getElementsByTagName('body')[0].id = 'bodyflash';
+	setTimeout(function () {
+		document.getElementsByTagName('body')[0].id = '';
+	}, 2000);
+
+	// image
+	setTimeout(function () {
+		switch (window.location.hash) {
+			case '#and':
+				document.getElementById('logic').src="logic/AND_ANSI_Labelled.svg";
+				break;
+			case '#or':
+				document.getElementById('logic').src="logic/OR_ANSI_Labelled.svg";
+				break;
+			case '#xor':
+				document.getElementById('logic').src="logic/XOR_ANSI_Labelled.svg";
+				break;
+			case '#not':
+				document.getElementById('logic').src="logic/NOT_ANSI_Labelled.svg";
+				break;
+			case '#nand':
+				document.getElementById('logic').src="logic/NAND_ANSI_Labelled.svg";
+				break;
+			case '#nor':
+				document.getElementById('logic').src="logic/NOR_ANSI_Labelled.svg";
+				break;
+			case '#xnor':
+				document.getElementById('logic').src="logic/XNOR_ANSI_Labelled.svg";
+				break;
+			default:
+				document.getElementById('logic').src="logic/NOT_ANSI_Labelled.svg";
+				break;
+		}
+		document.getElementsByClassName('modal')[0].classList.remove('none');
+	}, 2200);
+}
+
+window.onload = function () {
+	if (window.location.hash) {
+		show_me_your_logic();
+	}
+}
+		</script>
 	</body>
 </html>
