@@ -7,7 +7,7 @@ body {
 	background: #b10909;
 	margin: 0;
 	padding: 0;
-	overflow: hidden;
+	overflow-x: hidden;
 	font-family: serif;
 }
 
@@ -116,11 +116,21 @@ h3 {
 	font-size: 3em;
 }
 
-.a-developer {
-	font-size: 20em;
+.dev-wrap {
 	position: absolute;
 	left: 20px;
 	z-index: -4;
+}
+
+.a-developer {
+	font-size: 20em;
+	margin-bottom: 0;
+}
+
+.overlay {
+	position: absolute;
+	top: 80em;
+	left: -80px;
 }
 
 .site-search input {
@@ -171,12 +181,6 @@ li + li {
 
 li a {
 	background: #b10909;
-}
-
-.overlay {
-	position: absolute;
-	bottom: 120px;
-	right: -80px;
 }
 
 .modal {
