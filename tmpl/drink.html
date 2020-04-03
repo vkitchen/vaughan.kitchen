@@ -1,0 +1,56 @@
+<!--START page.html-->
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>@@title@@ - Vaughan.Kitchen</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="/cocktails/style.css">
+</head>
+<body>
+  <!--START frame.html-->
+  <div class="page-frame">
+    <nav class="masthead-container">
+      <div class="logo-container">
+        <a class="logo" href="/">VK</a>
+      </div>
+      <div>
+        <form class="masthead-search">
+          <button class="search-btn">
+            <span class="material-icons search-btn-icon">search</span>
+          </button>
+          <div class="masthead-search-terms">
+            <input class="masthead-search-term" type="text">
+          </div>
+        </form>
+      </div>
+    </nav>
+    <!--START drink.html-->
+    <div class="content">
+      <div class="content-inner">
+        <div class="content-title">
+          <h3>@@drink_name@@</h3>
+        </div>
+        <div class="drink">
+          <div class="drink-img">
+            <img src="@@drink_img@@">
+          </div>
+          <div class="recipe">
+            <p>@@drink_drinkware@@</p>
+            <p>@@drink_serve@@</p>
+            <p>@@drink_garnish@@</p>
+            <ul>
+               @@drink_ingredients@@
+            </ul>
+            <p>@@drink_method@@</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--END drink.html-->
+  </div>
+  <!--END frame.html-->
+</body>
+</html>
+<!--END page.html-->

@@ -1,12 +1,20 @@
 CFLAGS = -I/usr/local/include -Wall -Wextra -O2 -g
 
-LDFLAGS = -static -L/usr/local/lib -lkcgi -lz
+LDFLAGS = -static -L/usr/local/lib -lkcgi -lkcgihtml -lz
 
 HEADERS = \
-	file.h
+	cJSON.h \
+	cocktails.h \
+	file.h \
+	helpers.h \
+	str.h
 
 SRC = \
-	file.c
+	cJSON.c \
+	cocktails.c \
+	file.c \
+	helpers.c \
+	str.c
 
 OBJECTS = $(SRC:.c=.o)
 
