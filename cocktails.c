@@ -288,7 +288,7 @@ int drink_cmp(const void *va, const void *vb)
 	return strcmp(a->name, b->name);
 	}
 
-int read_drinks(struct tstrct *drinks)
+int read_drinks(struct tstrct *drinks, size_t *drinks_len)
 	{
 	DIR *dh;
 	struct dirent *d;
@@ -316,6 +316,9 @@ int read_drinks(struct tstrct *drinks)
 			}
 		closedir(dh);
 		}
+
+	if (drinks_len != NULL)
+		*drinks_len = drink_count;
 
 	qsort(drinks, drink_count, sizeof(struct tstrct), drink_cmp);
 
@@ -388,7 +391,7 @@ int serve_index(struct kreq *r)
 	struct tstrct drinks[1024];
 	memset(&drinks, 0, sizeof(struct tstrct) * 1024);
 
-	if (!read_drinks(drinks))
+	if (!read_drinks(drinks, NULL))
 		return(serve_500(r));
 
 	struct ktemplate t;
@@ -430,6 +433,90 @@ int serve_index(struct kreq *r)
 	return(EXIT_SUCCESS);
 	}
 
+void filter_drinks(struct tstrct *drinks, size_t *drinks_len, char *term)
+	{
+	// TODO needs to be signed?
+	for (size_t i = 0; i < *drinks_len; i++)
+		{
+		if (strcasestr(drinks[i].name, term) != NULL)
+			continue;
+
+		for (size_t j = 0; j < 128 && drinks[i].ingredients[j] != NULL; j++)
+			if (strcasestr(drinks[i].ingredients[j], term) != NULL)
+				goto OUTER;
+
+		// fall-through = swap delete as did not contain term
+		if (i < *drinks_len - 1) // not last item
+			drinks[i] = drinks[*drinks_len - 1];
+		memset(&drinks[*drinks_len - 1], 0, sizeof(struct tstrct));
+		(*drinks_len)--;
+		i--;
+
+		OUTER: ;
+		}
+
+	qsort(drinks, *drinks_len, sizeof(struct tstrct), drink_cmp);
+	}
+
+// TODO refactor out overlapping structure with serve_index()
+int serve_search(struct kreq *r)
+	{
+	struct tstrct drinks[1024];
+	memset(&drinks, 0, sizeof(struct tstrct) * 1024);
+
+	size_t drinks_len = 0;
+	if (!read_drinks(drinks, &drinks_len))
+		return(serve_500(r));
+
+	// TODO refactor this if
+	if (r->fields != NULL && strcmp(r->fields->key, "q") == 0
+		&& r->fields->val != NULL
+		&& r->fields->val[0] != '\0')
+		{
+		char **terms = string_split(" ", r->fields->val);
+		for (size_t i = 0; terms[i] != NULL; i++)
+			filter_drinks(drinks, &drinks_len, terms[i]);
+		}
+
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&t, 0, sizeof(struct ktemplate));
+	memset(&hr, 0, sizeof(struct khtmlreq));
+
+	for (size_t i = 0; i < 1024; i++)
+		{
+		drinks[i].r = r;
+		drinks[i].hr = &hr;
+		}
+
+	/* SETUP outer template */
+	struct tstrct_dl dl;
+	memset(&dl, 0, sizeof(struct tstrct_dl));
+
+	dl.r = r;
+	dl.hr = &hr;
+	dl.title = "Search Results";
+	dl.heading = "Search Results";
+	dl.drinks = drinks;
+
+	t.key = keys_drinks_list;
+	t.keysz = KEY_DL__MAX;
+	t.arg = &dl;
+	t.cb = template_drinks_list;
+
+	response_open(r, KHTTP_200);
+	khtml_open(&hr, r, 0);
+
+	khttp_template(r, &t, "tmpl/drinks_list.html");
+
+	khtml_close(&hr);
+
+	khttp_free(r);
+
+	return(EXIT_SUCCESS);
+	}
+
 int serve_cocktails(struct kreq *r)
 	{
 	if (r->mime != KMIME_TEXT_HTML)
@@ -438,6 +525,9 @@ int serve_cocktails(struct kreq *r)
 	char *page = NULL;
 	if ((page = string_prefix("drinks/", r->path)) != NULL)
 		return(serve_drink(r, page));
+
+	if (string_prefix("search", r->path) != NULL)
+		return(serve_search(r));
 
 	if (r->path[0] == '\0')
 		return(serve_index(r));
