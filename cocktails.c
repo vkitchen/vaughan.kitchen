@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <kcgi.h>
 #include <kcgihtml.h>
 
@@ -16,6 +17,7 @@
 enum key {
 	KEY_TITLE,
 	KEY_DRINK_NAME,
+	KEY_DRINK_HREF,
 	KEY_DRINK_IMG,
 	KEY_DRINK_DRINKWARE,
 	KEY_DRINK_SERVE,
@@ -28,6 +30,7 @@ enum key {
 static const char *const keys[KEY__MAX] = {
 	"title",
 	"drink_name",
+	"drink_href",
 	"drink_img",
 	"drink_drinkware",
 	"drink_serve",
@@ -37,7 +40,7 @@ static const char *const keys[KEY__MAX] = {
 };
 
 struct tstrct {
-	struct khtmlreq hr;
+	struct khtmlreq *hr;
 	struct kreq *r;
 	char *name;
 	char *img;
@@ -56,38 +59,42 @@ template(size_t key, void *arg)
 	switch (key) {
 	case (KEY_TITLE):
 		if (p->name != NULL)
-			khtml_puts(&p->hr, p->name);
+			khtml_puts(p->hr, p->name);
 		break;
 	case (KEY_DRINK_NAME):
 		if (p->name != NULL)
-			khtml_puts(&p->hr, p->name);
+			khtml_puts(p->hr, p->name);
+		break;
+	case (KEY_DRINK_HREF):
+		if (p->name != NULL)
+			khtml_puts(p->hr, string_cat(2, "/cocktails/drinks/", kutil_urlencode(p->name)));
 		break;
 	case (KEY_DRINK_IMG):
-		khtml_puts(&p->hr, p->img);
+		khtml_puts(p->hr, p->img);
 		break;
 	case (KEY_DRINK_DRINKWARE):
 		if (p->drinkware != NULL)
-			khtml_puts(&p->hr, p->drinkware);
+			khtml_puts(p->hr, p->drinkware);
 		break;
 	case (KEY_DRINK_SERVE):
 		if (p->serve != NULL)
-			khtml_puts(&p->hr, p->serve);
+			khtml_puts(p->hr, p->serve);
 		break;
 	case (KEY_DRINK_GARNISH):
 		if (p->garnish != NULL)
-			khtml_puts(&p->hr, p->garnish);
+			khtml_puts(p->hr, p->garnish);
 		break;
 	case (KEY_DRINK_INGREDIENTS):
 		for (int i = 0; p->ingredients[i] != NULL; i++)
 			{
-			khtml_elem(&p->hr, KELEM_LI);
-			khtml_puts(&p->hr, p->ingredients[i]);
-			khtml_closeelem(&p->hr, 1);
+			khtml_elem(p->hr, KELEM_LI);
+			khtml_puts(p->hr, p->ingredients[i]);
+			khtml_closeelem(p->hr, 1);
 			}
 		break;
 	case (KEY_DRINK_METHOD):
 		if (p->method != NULL)
-			khtml_puts(&p->hr, p->method);
+			khtml_puts(p->hr, p->method);
 		break;
 	default:
 		return(0);
@@ -173,34 +180,82 @@ char *parse_ingredient(cJSON *json)
 		return string_cat(5, ingredient.measure, " ", ingredient.unit, " ", ingredient.name);
 	}
 
-int serve_drink(struct kreq *r, char *page_name)
+int parse_drink(struct tstrct *p, char *page_name)
 	{
-	char file_name[2048];
 	char *json_data;
-	size_t file_length = 0;
-
-	strlcpy(file_name, "html/cocktails/api/v1/drinks/", 2048);
-	strlcpy(&file_name[strlen(file_name)], page_name, 2048 - strlen(file_name));
-	strlcpy(&file_name[strlen(file_name)], ".json", 2048 - strlen(file_name));
-	file_length = file_slurp(file_name, &json_data);
+	char *file_name = string_cat(3, "html/cocktails/api/v1/drinks/", page_name, ".json");
+	size_t file_length = file_slurp(file_name, &json_data);
 	if (file_length == 0)
-		return(serve_500(r));
+		return 0;
 
 	cJSON *json_handle = cJSON_Parse(json_data);
 	cJSON *json = json_handle->child;
 	if (json == NULL)
-		return(serve_500(r));
+		return 0;
+
+	// TODO validate json structure
+
+	int num_ingredients = 0;
+	while (json != NULL)
+		{
+		if (strcmp(json->string, "name") == 0)
+			p->name = strdup(json->valuestring);
+		else if (strcmp(json->string, "img") == 0)
+			{
+			cJSON *sub_json = json->child;
+			if (sub_json != NULL)
+				p->img = string_cat(2, "/img/250x250/",
+					kutil_urlencode(sub_json->valuestring));
+			}
+		else if (strcmp(json->string, "serve") == 0)
+			p->serve = strdup(json->valuestring);
+		else if (strcmp(json->string, "garnish") == 0)
+			p->garnish = strdup(json->valuestring);
+		else if (strcmp(json->string, "drinkware") == 0)
+			p->drinkware = strdup(json->valuestring);
+		else if (strcmp(json->string, "ingredients") == 0)
+			{
+			cJSON *sub_json = json->child;
+			while (sub_json != NULL)
+				{
+				p->ingredients[num_ingredients++] = parse_ingredient(sub_json);
+				sub_json = sub_json->next;
+				}
+			}
+		else if (strcmp(json->string, "method") == 0)
+			p->method = strdup(json->valuestring);
+		json = json->next;
+		}
+
+	if (p->img == NULL)
+		p->img = img_missing(p->drinkware);
+	p->img = string_cat(2, "/cocktails", p->img);
+
+	// TODO check have enough data to render
+
+	cJSON_Delete(json_handle);
+
+	return 1;
+	}
+
+int serve_drink(struct kreq *r, char *page_name)
+	{
+	char *decoded_page_name = NULL;
+	if (kutil_urldecode(page_name, &decoded_page_name) != KCGI_OK)
+		return(serve_500(r)); // TODO change to bad request?
 
 	/* START send_template() */
 	struct ktemplate t;
 	struct tstrct p;
+	struct khtmlreq hr;
 
 	memset(&t, 0, sizeof(struct ktemplate));
 	memset(&p, 0, sizeof(struct tstrct));
+	memset(&hr, 0, sizeof(struct khtmlreq));
 
 	p.r = r;
+	p.hr = &hr;
 
-	int num_ingredients = 0;
 	char *ingredient_list[128];
 	memset(ingredient_list, 0, sizeof(ingredient_list));
 	p.ingredients = ingredient_list;
@@ -210,58 +265,167 @@ int serve_drink(struct kreq *r, char *page_name)
 	t.arg = &p;
 	t.cb = template;
 
-	/* START json_parse() */
-	// TODO validate json structure
-
-	while (json != NULL)
-		{
-		if (strcmp(json->string, "name") == 0)
-			p.name = json->valuestring;
-		else if (strcmp(json->string, "img") == 0)
-			{
-			cJSON *sub_json = json->child;
-			if (sub_json != NULL)
-				p.img = string_cat(2, "/img/250x250/", sub_json->valuestring);
-			}
-		else if (strcmp(json->string, "serve") == 0)
-			p.serve = json->valuestring;
-		else if (strcmp(json->string, "garnish") == 0)
-			p.garnish = json->valuestring;
-		else if (strcmp(json->string, "drinkware") == 0)
-			p.drinkware = json->valuestring;
-		else if (strcmp(json->string, "ingredients") == 0)
-			{
-			cJSON *sub_json = json->child;
-			while (sub_json != NULL)
-				{
-				p.ingredients[num_ingredients++] = parse_ingredient(sub_json);
-				sub_json = sub_json->next;
-				}
-			}
-		else if (strcmp(json->string, "method") == 0)
-			p.method = json->valuestring;
-		json = json->next;
-		}
-
-	if (p.img == NULL)
-		p.img = img_missing(p.drinkware);
-	p.img = string_cat(2, "/cocktails", p.img);
-
-	// TODO check have enough data to render
-
-	/* END json_parse() */
+	if (!parse_drink(&p, decoded_page_name))
+		return(serve_500(r));
 
 	response_open(r, KHTTP_200);
-	khtml_open(&p.hr, r, 0);
+	khtml_open(&hr, r, 0);
 
 	khttp_template(r, &t, "tmpl/drink.html");
 	/* END send_template() */
 
-	khtml_close(&p.hr);
+	khtml_close(&hr);
 
 	khttp_free(r);
 
-	cJSON_Delete(json_handle);
+	return(EXIT_SUCCESS);
+	}
+
+int drink_cmp(const void *va, const void *vb)
+	{
+	struct tstrct *a = (struct tstrct *)va;
+	struct tstrct *b = (struct tstrct *)vb;
+	return strcmp(a->name, b->name);
+	}
+
+int read_drinks(struct tstrct *drinks)
+	{
+	DIR *dh;
+	struct dirent *d;
+	dh = opendir("html/cocktails/api/v1/drinks/");
+
+	size_t drink_count = 0;
+	if (dh)
+		{
+		while ((d = readdir(dh)) != NULL)
+			{
+			char *drink_name = strdup(d->d_name);
+			char *suffix;
+			if ((suffix = string_suffix(".json", drink_name)) != NULL)
+				{
+				suffix[0] = '\0';
+				drinks[drink_count].ingredients = malloc(sizeof(char **) * 128);
+				memset(drinks[drink_count].ingredients, 0, sizeof(char **) * 128);
+				if (!parse_drink(&drinks[drink_count], drink_name))
+					{
+					closedir(dh);
+					return 0;
+					}
+				drink_count++;
+				}
+			}
+		closedir(dh);
+		}
+
+	qsort(drinks, drink_count, sizeof(struct tstrct), drink_cmp);
+
+	return 1;
+	}
+
+enum key_drinks_list {
+	KEY_DL_TITLE,
+	KEY_DL_HEADING,
+	KEY_DL_DRINKS,
+	KEY_DL__MAX
+};
+
+static const char *const keys_drinks_list[KEY_DL__MAX] = {
+	"title",
+	"heading",
+	"drinks",
+};
+
+struct tstrct_dl {
+	struct khtmlreq *hr;
+	struct kreq *r;
+	char *title;
+	char *heading;
+	struct tstrct *drinks;
+};
+
+static int
+template_drinks_list(size_t key, void *arg)
+{
+	struct tstrct_dl *dl = arg;
+
+	switch (key) {
+	case (KEY_DL_TITLE):
+		if (dl->title != NULL)
+			khtml_puts(dl->hr, dl->title);
+		break;
+	case (KEY_DL_HEADING):
+		if (dl->heading != NULL)
+			khtml_puts(dl->hr, dl->heading);
+		break;
+	case (KEY_DL_DRINKS):
+		if (dl->drinks != NULL)
+			{
+			// render sub template
+			struct ktemplate t;
+			memset(&t, 0, sizeof(struct ktemplate));
+
+			t.key = keys;
+			t.keysz = KEY__MAX;
+			t.cb = template;
+
+			for (size_t i = 0; i < 1024 && dl->drinks[i].name != NULL; i++)
+				{
+				t.arg = &dl->drinks[i];
+				// TODO probably rereading a few hundred times is a bad idea
+				khttp_template(dl->r, &t, "tmpl/drink_snippet.html");
+				}
+			}
+		break;
+	default:
+		return(0);
+	}
+
+	return(1);
+}
+
+int serve_index(struct kreq *r)
+	{
+	struct tstrct drinks[1024];
+	memset(&drinks, 0, sizeof(struct tstrct) * 1024);
+
+	if (!read_drinks(drinks))
+		return(serve_500(r));
+
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&t, 0, sizeof(struct ktemplate));
+	memset(&hr, 0, sizeof(struct khtmlreq));
+
+	for (size_t i = 0; i < 1024; i++)
+		{
+		drinks[i].r = r;
+		drinks[i].hr = &hr;
+		}
+
+	/* SETUP outer template */
+	struct tstrct_dl dl;
+	memset(&dl, 0, sizeof(struct tstrct_dl));
+
+	dl.r = r;
+	dl.hr = &hr;
+	dl.title = "All Drinks";
+	dl.heading = "All Drinks";
+	dl.drinks = drinks;
+
+	t.key = keys_drinks_list;
+	t.keysz = KEY_DL__MAX;
+	t.arg = &dl;
+	t.cb = template_drinks_list;
+
+	response_open(r, KHTTP_200);
+	khtml_open(&hr, r, 0);
+
+	khttp_template(r, &t, "tmpl/drinks_list.html");
+
+	khtml_close(&hr);
+
+	khttp_free(r);
 
 	return(EXIT_SUCCESS);
 	}
@@ -269,11 +433,14 @@ int serve_drink(struct kreq *r, char *page_name)
 int serve_cocktails(struct kreq *r)
 	{
 	if (r->mime != KMIME_TEXT_HTML)
-		return(serve_static(r));
+		return(serve_static_encoded(r));
 
 	char *page = NULL;
 	if ((page = string_prefix("drinks/", r->path)) != NULL)
 		return(serve_drink(r, page));
+
+	if (r->path[0] == '\0')
+		return(serve_index(r));
 
 	return(serve_404(r));
 	}

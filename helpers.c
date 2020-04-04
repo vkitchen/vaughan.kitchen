@@ -6,6 +6,7 @@
 #include <kcgi.h>
 
 #include "file.h"
+#include "str.h"
 
 #include "helpers.h"
 
@@ -58,6 +59,33 @@ int serve_static(struct kreq *r)
 			strlcpy(&file_name[strlen(file_name)], "/index.html", 2048 - strlen(file_name));
 		file_length = file_slurp(file_name, &page_data);
 		}
+
+	if (file_length == 0)
+		return(serve_404(r));
+
+	/* RESPONSE */
+	response_open(r, KHTTP_200);
+
+	khttp_write(r, page_data, file_length);
+
+	khttp_free(r);
+	return(EXIT_SUCCESS);
+	}
+
+// TODO better solution for this?
+// helper for serving nasty urls on cocktails page
+int serve_static_encoded(struct kreq *r)
+	{
+	char *file_name;
+	char *page_data;
+	size_t file_length = 0;
+	char *path = NULL;
+
+	if (kutil_urldecode(r->fullpath, &path) != KCGI_OK)
+		return(serve_500(r)); // Change to BAD_REQUEST?
+
+	file_name = string_cat(2, "html", path);
+	file_length = file_slurp(file_name, &page_data);
 
 	if (file_length == 0)
 		return(serve_404(r));

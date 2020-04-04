@@ -38,3 +38,17 @@ char *string_prefix(char *pre, char *str)
 			return NULL;
 	return str;
 	}
+
+char *string_suffix(char *post, char *str)
+	{
+	size_t post_len = strlen(post);
+	size_t str_len = strlen(str);
+	if (str_len < post_len)
+		return NULL;
+	char *save = str + (str_len - post_len);
+	str = save;
+	while (*str)
+		if (*post++ != *str++)
+			return NULL;
+	return save;
+	}
