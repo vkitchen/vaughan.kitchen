@@ -40,6 +40,16 @@ size_t file_slurp(char const *filename, char **into)
 	return file_length;
 	}
 
+// TODO error detection
+size_t file_spurt(char const *filename, char *buffer, size_t bytes)
+	{
+	FILE *fh;
+	fh = fopen(filename, "wb");
+	fwrite(buffer, 1, bytes, fh);
+	fclose(fh);
+	return bytes;
+	}
+
 size_t file_size(char const *filename)
 	{
 	struct stat details;

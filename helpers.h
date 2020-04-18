@@ -4,6 +4,7 @@
 enum page {
 	PAGE_INDEX,
 	PAGE_COCKTAILS,
+	PAGE_ROOMS,
 	PAGE__MAX
 };
 

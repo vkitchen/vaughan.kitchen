@@ -8,11 +8,13 @@
 #include <kcgi.h>
 
 #include "cocktails.h"
+#include "rooms.h"
 #include "helpers.h"
 
 const char *const pages[PAGE__MAX] = {
 	"index",
-	"cocktails"
+	"cocktails",
+	"rooms"
 };
 
 int main(void)
@@ -24,6 +26,9 @@ int main(void)
 
 	if (r.page == PAGE_COCKTAILS)
 		return(serve_cocktails(&r));
+
+	if (r.page == PAGE_ROOMS)
+		return(serve_rooms(&r));
 
 	return(serve_static(&r));
 	}

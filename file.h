@@ -27,6 +27,7 @@
 */
 size_t file_slurp(char const *filename, char **into);
 size_t file_size(char const *filename);
+size_t file_spurt(char const *filename, char *buffer, size_t bytes);
 
 int isDirectory(char const *filename);
 

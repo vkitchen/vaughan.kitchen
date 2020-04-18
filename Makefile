@@ -7,6 +7,7 @@ HEADERS = \
 	cocktails.h \
 	file.h \
 	helpers.h \
+	rooms.h \
 	str.h
 
 SRC = \
@@ -14,19 +15,25 @@ SRC = \
 	cocktails.c \
 	file.c \
 	helpers.c \
+	rooms.c \
 	str.c
 
 OBJECTS = $(SRC:.c=.o)
 
 .SUFFIXES: .c .o
 
+.PHONY: chinese-chess
+
 .c.o: $(HEADERS)
 	$(CC) $(CFLAGS) -c $<
 
-all: main
+all: main chinese-chess
 
 main: main.o $(OBJECTS) $(HEADERS)
 	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
+
+chinese-chess:
+	$(MAKE) -C $@
 
 clean:
 	rm -f main main.o $(OBJECTS)
