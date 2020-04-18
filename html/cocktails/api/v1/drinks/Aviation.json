@@ -1,6 +1,7 @@
 {
 	"name": "Aviation",
 	"img": [
+		"Aviation 2.jpg",
 		"Aviation.jpg"
 	],
 	"lists": [
@@ -24,6 +25,11 @@
 		{
 			"name": "Maraschino liqueur",
 			"measure": "1.5",
+			"unit": "cl"
+		},
+		{
+			"name": "Crème de violette",
+			"measure": "1",
 			"unit": "cl"
 		}
 	],

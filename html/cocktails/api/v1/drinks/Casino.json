@@ -1,6 +1,8 @@
 {
 	"name": "Casino",
-	"img": [],
+	"img": [
+		"Casino.jpg"
+	],
 	"lists": [
 		"IBA",
 		"IBA Unforgettables"
@@ -20,14 +22,14 @@
 			"unit": "cl"
 		},
 		{
-			"name": "Orange bitters",
+			"name": "Lemon juice",
 			"measure": "1",
 			"unit": "cl"
 		},
 		{
-			"name": "Lemon juice",
-			"measure": "1",
-			"unit": "cl"
+			"name": "Orange bitters",
+			"measure": "2",
+			"unit": "dash"
 		}
 	],
 	"method": "Pour all ingredients into shaker with ice cubes. Shake well. Strain into chilled cocktail glass. Garnish with a lemon twist and a maraschino cherry. Serve without a straw."
