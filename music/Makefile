@@ -7,10 +7,13 @@ LDFLAGS = -static -L/usr/local/lib -lpthread -lcurl -lnghttp2 -lssl -lcrypto -ls
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-all: main
+all: main render
 
 main: main.o
 	$(CC) -o $@ main.o $(LDFLAGS)
+
+render: render.o
+	$(CC) -o $@ render.o $(LDFLAGS)
 
 clean:
 	rm -f main main.o
