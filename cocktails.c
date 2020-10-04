@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <dirent.h>
 #include <kcgi.h>
@@ -329,6 +330,7 @@ enum key_drinks_list {
 	KEY_DL_TITLE,
 	KEY_DL_HEADING,
 	KEY_DL_DRINKS,
+	KEY_NEXT_PAGE,
 	KEY_DL__MAX
 };
 
@@ -336,6 +338,7 @@ static const char *const keys_drinks_list[KEY_DL__MAX] = {
 	"title",
 	"heading",
 	"drinks",
+	"next_page",
 };
 
 struct tstrct_dl {
@@ -343,6 +346,7 @@ struct tstrct_dl {
 	struct kreq *r;
 	char *title;
 	char *heading;
+	size_t page;
 	struct tstrct *drinks;
 };
 
@@ -371,7 +375,7 @@ template_drinks_list(size_t key, void *arg)
 			t.keysz = KEY__MAX;
 			t.cb = template;
 
-			for (size_t i = 0; i < 1024 && dl->drinks[i].name != NULL; i++)
+			for (size_t i = 0 + dl->page * 10; i < dl->page * 10 + 10 && i < 1024 && dl->drinks[i].name != NULL; i++)
 				{
 				t.arg = &dl->drinks[i];
 				// TODO probably rereading a few hundred times is a bad idea
@@ -379,6 +383,16 @@ template_drinks_list(size_t key, void *arg)
 				}
 			}
 		break;
+	case (KEY_NEXT_PAGE):
+		{
+		char buf[1024];
+		snprintf(buf, 1024, "?page=%zd", dl->page+1);
+		khtml_attr(dl->hr, KELEM_A,
+			KATTR_HREF, buf, KATTR__MAX);
+		khtml_puts(dl->hr, "Next Page");
+		khtml_closeelem(dl->hr, 1);
+		break;
+		}
 	default:
 		return(0);
 	}
@@ -414,7 +428,12 @@ int serve_index(struct kreq *r)
 	dl.hr = &hr;
 	dl.title = "All Drinks";
 	dl.heading = "All Drinks";
+	dl.page = 0;
 	dl.drinks = drinks;
+
+	// TODO don't suppress errors
+	if (r->fieldmap[PARAM_PAGE_NO] != NULL)
+		dl.page = strtol(r->fieldmap[PARAM_PAGE_NO]->val, NULL, 10);
 
 	t.key = keys_drinks_list;
 	t.keysz = KEY_DL__MAX;

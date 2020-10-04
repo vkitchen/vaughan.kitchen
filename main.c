@@ -17,11 +17,16 @@ const char *const pages[PAGE__MAX] = {
 	"rooms"
 };
 
+const struct kvalid query_params[PARAM__MAX] = {
+	{ kvalid_string, "page" }
+};
+
 int main(void)
 	{
 	struct kreq r;
 
-	if (khttp_parse(&r, NULL, 0, pages, PAGE__MAX, 0) != KCGI_OK)
+
+	if (khttp_parse(&r, query_params, PARAM__MAX, pages, PAGE__MAX, 0) != KCGI_OK)
 		return(EXIT_FAILURE);
 
 	if (r.page == PAGE_COCKTAILS)
