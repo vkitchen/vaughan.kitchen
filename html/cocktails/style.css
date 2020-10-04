@@ -450,84 +450,10 @@ template {
   display: none;
 }
 
-/* Make clicks pass-through */
-
-#nprogress {
-  pointer-events: none;
-}
-
-#nprogress .bar {
-  background: #29d;
-
-  position: fixed;
-  z-index: 1031;
-  top: 0;
-  left: 0;
-
-  width: 100%;
-  height: 2px;
-}
-
-/* Fancy blur effect */
-
-#nprogress .peg {
-  display: block;
-  position: absolute;
-  right: 0px;
-  width: 100px;
-  height: 100%;
-  -webkit-box-shadow: 0 0 10px #29d, 0 0 5px #29d;
-          box-shadow: 0 0 10px #29d, 0 0 5px #29d;
-  opacity: 1.0;
-
-  -webkit-transform: rotate(3deg) translate(0px, -4px);
-          transform: rotate(3deg) translate(0px, -4px);
-}
-
-/* Remove these to get rid of the spinner */
-
-#nprogress .spinner {
-  display: block;
-  position: fixed;
-  z-index: 1031;
-  top: 15px;
-  right: 15px;
-}
-
-#nprogress .spinner-icon {
-  width: 18px;
-  height: 18px;
-  -webkit-box-sizing: border-box;
-          box-sizing: border-box;
-
-  border: solid 2px transparent;
-  border-top-color: #29d;
-  border-left-color: #29d;
-  border-radius: 50%;
-
-  -webkit-animation: nprogress-spinner 400ms linear infinite;
-          animation: nprogress-spinner 400ms linear infinite;
-}
-
-.nprogress-custom-parent {
-  overflow: hidden;
-  position: relative;
-}
-
-.nprogress-custom-parent #nprogress .spinner,
-.nprogress-custom-parent #nprogress .bar {
-  position: absolute;
-}
-
-@-webkit-keyframes nprogress-spinner {
-  0%   { -webkit-transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); }
-}
-
-@keyframes nprogress-spinner {
-  0%   { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
-}
+/*************
+ * STYLE.CSS *
+ *************
+ */
 
 body {
   font-family: Open Sans, sans-serif;
@@ -538,7 +464,7 @@ body {
 .logo:link, .logo:visited, .logo:hover, .logo:active {
   font-size: 42px;
   font-weight: bold;
-  color: #000;
+  color: red;
   text-decoration: none;
   line-height: 40px
 }
@@ -548,17 +474,17 @@ body {
   padding: 0;
   float: right;
   height: 44px;
-  background: #f8f8f8;
-  color: #333;
+  background: rgba(0, 0, 0, 0);
+  color: red;
   display: inline-block;
-  border: solid 1px #d3d3d3;
+  border: solid 1px red;
   border-left: 0;
   vertical-align: middle;
   white-space: nowrap;
 }
 
 .masthead-container {
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid red;
   min-width: 0;
   padding-bottom: 8px;
   padding-top: 7px;
@@ -585,7 +511,7 @@ body {
 }
 
 .masthead-search-term {
-  color: #767676;
+  color: red;
   display: inline-block;
   border: 0;
   height: 100%;
@@ -608,7 +534,8 @@ body {
   position: relative;
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
-  border: 1px solid #ccc;
+  border: 1px solid red;
+  border-right: 0;
 }
 
 .search-btn-icon {
@@ -632,7 +559,8 @@ body {
 .content-title {
   display: inline-block;
   white-space: nowrap;
-  border-bottom: 1px solid #000;
+  color: red;
+  border-bottom: 1px solid red;
   padding: 0 20px;
 }
 
@@ -642,6 +570,7 @@ body {
 
 .drink {
   margin: 20px 0;
+  border: 1px solid red;
 }
 
 .drink-img {
@@ -667,11 +596,11 @@ body {
   display: inline-block;
   vertical-align: top;
   max-width: 540px;
-  color: #525252;
+  color: red;
 }
 
 .recipe-link {
-  color: #383838;
+  color: red;
   text-decoration: none;
   font-weight: bold;
 }

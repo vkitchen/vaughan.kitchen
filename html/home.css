@@ -4,8 +4,7 @@ html, body {
 }
 
 body {
-	color: #000;
-	background: #b10909;
+	color: red;
 	margin: 0;
 	padding: 0;
 	overflow-x: hidden;
@@ -80,7 +79,7 @@ body {
 .right {
 	width: 50%;
 	height: 100%;
-	border-left: 1px solid #000;
+	border-left: 1px solid red;
 	margin-left: -10px; /* tolerance to deal with browser zoom */
 	display: inline-block;
 	vertical-align: top;
@@ -92,7 +91,7 @@ body {
 }
 
 a {
-	color: #000;
+	color: red;
 }
 
 a:hover {
@@ -100,7 +99,7 @@ a:hover {
 }
 
 .site-logo a {
-	color: #000;
+	color: #a22;
 	font-size: 20em;
 	text-decoration: none;
 	margin-left: -50px;
@@ -123,27 +122,19 @@ h3 {
 	z-index: -4;
 }
 
-.a-developer {
-	font-size: 20em;
-	margin-bottom: 0;
-}
-
-.overlay {
-	position: absolute;
-	top: 80em;
-	left: -80px;
-}
-
 .site-search input {
-	border: 2px solid #000;
+	border-top: 2px solid red;
+	border-right: 2px solid red;
+	border-bottom: 2px solid red;
+	border-left: 8px solid red;
 	background-color: rgba(0, 0, 0, 0);
-	color: #000;
+	color: red;
 	margin: 0;
 	padding: 4px;
 }
 
 .site-search input::placeholder {
-	color: #0a0a0a;
+	color: #fa0a0a;
 }
 
 .site-search input[type=text] {
@@ -152,7 +143,8 @@ h3 {
 }
 
 .site-search input[type=submit] {
-	font-weight: bold;
+	border-left: 1px solid red;
+	font-weight: normal;
 	cursor: pointer;
 }
 
@@ -160,7 +152,6 @@ h3 {
 h4 {
 	margin-top: 24px;
 	margin-bottom: 20px;
-	background: #b10909;
 }
 
 ul {
@@ -170,7 +161,7 @@ ul {
 }
 
 li {
-	border-bottom: 1px solid black;
+	border-bottom: 1px solid red;
 	padding-left: 10px;
 	padding-right: 29%;
 	width: 100%;
@@ -181,7 +172,6 @@ li + li {
 }
 
 li a {
-	background: #b10909;
 }
 
 .modal {
