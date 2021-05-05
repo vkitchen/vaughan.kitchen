@@ -1,39 +1,19 @@
-CFLAGS = -I/usr/local/include -Wall -Wextra -O2 -g
+CFLAGS = -Wall -Wextra -O2 -g `pkg-config --cflags kcgi-html sqlbox`
 
-LDFLAGS = -static -L/usr/local/lib -lkcgi -lkcgihtml -lz
-
-HEADERS = \
-	cJSON.h \
-	cocktails.h \
-	file.h \
-	helpers.h \
-	rooms.h \
-	str.h
-
-SRC = \
-	cJSON.c \
-	cocktails.c \
-	file.c \
-	helpers.c \
-	rooms.c \
-	str.c
-
-OBJECTS = $(SRC:.c=.o)
+LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox`
 
 .SUFFIXES: .c .o
-
-.PHONY: chinese-chess
 
 .c.o: $(HEADERS)
 	$(CC) $(CFLAGS) -c $<
 
-all: main chinese-chess
+all: main
 
-main: main.o $(OBJECTS) $(HEADERS)
-	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
+# main: main.o $(OBJECTS) $(HEADERS)
+#	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
 
-chinese-chess:
-	$(MAKE) -C $@
+main: main.o
+	$(CC) -o $@ main.o $(LDFLAGS)
 
 clean:
 	rm -f main main.o $(OBJECTS)
