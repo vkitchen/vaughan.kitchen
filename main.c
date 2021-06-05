@@ -468,7 +468,8 @@ main(void)
 			handle_logout(&r, p, dbid, u);
 			break;
 		default:
-			abort();
+			open_response(&r, KHTTP_404);
+			khttp_puts(&r, "404 Not Found");
 		}
 
 	// FREE
