@@ -18,16 +18,24 @@
 
 #define LOGFILE "vaughan.kitchen.log"
 
-struct user {
+struct user
+	{
 	int64_t    id;
 	char      *username; /* user's login */
 	char      *name;     /* user's display name */
-};
+	};
+
+struct tmpl_data
+	{
+	struct user       *user;
+	struct khtmlreq   *req;
+	};
 
 enum page
 	{
 	PAGE_INDEX,
 	PAGE_LOGIN,
+	PAGE_LOGOUT,
 	PAGE__MAX
 	};
 
@@ -35,6 +43,7 @@ const char *const pages[PAGE__MAX] =
 	{
 	"index",
 	"login",
+	"logout",
 	};
 
 enum param
@@ -54,11 +63,13 @@ const struct kvalid params[PARAM__MAX] =
 
 enum key
 	{
+	KEY_LOGIN_LOGOUT_LINK,
 	KEY__MAX,
 	};
 
 const char *keys[KEY__MAX] =
 	{
+	"login-logout-link",
 	};
 
 struct sqlbox_src srcs[] =
@@ -71,6 +82,7 @@ enum stmt
 	STMT_USER_GET,
 	STMT_SESS_GET,
 	STMT_SESS_NEW,
+	STMT_SESS_DEL,
 	STMT__MAX,
 	};
 
@@ -81,6 +93,7 @@ struct sqlbox_pstmt pstmts[] =
 	{ .stmt = (char *)"SELECT " USER ",users.shadow FROM users WHERE login=?" },
 	{ .stmt = (char *)"SELECT " USER " FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.cookie=?" },
 	{ .stmt = (char *)"INSERT INTO sessions (cookie,user_id) VALUES (?,?)" },
+	{ .stmt = (char *)"DELETE FROM sessions WHERE cookie=?" },
 	};
 
 void
@@ -230,9 +243,54 @@ db_sess_get(struct sqlbox *p, size_t dbid, int64_t cookie)
 	return user;
 	}
 
+void
+db_sess_del(struct sqlbox *p, size_t dbid, int64_t cookie)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .iparm = cookie, .type = SQLBOX_PARM_INT },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_SESS_DEL, 1, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
 static int
 template(size_t key, void *arg)
 	{
+	struct tmpl_data *data = arg;
+
+	switch (key)
+		{
+		case (KEY_LOGIN_LOGOUT_LINK):
+			if (data->user == NULL)
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "login", KATTR__MAX);
+				khtml_puts(data->req, "Login");
+				khtml_closeelem(data->req, 1);
+				}
+			else
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "logout", KATTR__MAX);
+				khtml_puts(data->req, "Logout");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		default:
+			abort();
+		}
+
 	return 1;
 	}
 
@@ -249,39 +307,53 @@ open_response(struct kreq *r, enum khttp code)
 	open_head(r, code);
 	khttp_body(r);
 	}
+
+// TODO: Do we want to combine this with a render function so you can't try render a non opened template?
+static void
+open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, struct kreq *r)
+	{
+	memset(t, 0, sizeof(struct ktemplate));
+	memset(hr, 0, sizeof(struct khtmlreq));
+
+	if (khtml_open(hr, r, 0) != KCGI_OK)
+		errx(EXIT_FAILURE, "khtml_open");
+
+	data->req = hr;
+
+	t->key = keys;
+	t->keysz = KEY__MAX;
+	t->arg = (void *)data;
+	t->cb = template;
+	}
 	
 
 static void
 handle_index(struct kreq *r, struct user *user)
 	{
+	struct tmpl_data data;
 	struct ktemplate t;
+	struct khtmlreq hr;
 
-	memset(&t, 0, sizeof(struct ktemplate));
-
-	t.key = keys;
-	t.keysz = KEY__MAX;
-	t.arg = NULL;
-	t.cb = template;
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.user = user;
 
 	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
 	khttp_template(r, &t, "tmpl/index.html");
 	}
 
 static void
 handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
+	struct tmpl_data data;
 	struct ktemplate t;
+	struct khtmlreq hr;
 
 	int64_t		cookie;
 	char		buf[64];
 
-	memset(&t, 0, sizeof(struct ktemplate));
-
-	t.key = keys;
-	t.keysz = KEY__MAX;
-	t.arg = NULL;
-	t.cb = template;
-
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.user = user;
 
 	if (r->method == KMETHOD_POST)
 		{
@@ -315,13 +387,36 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		if (user != NULL)
 			khttp_puts(r, "Already logged in");
 		else
+			{
+			open_template(&data, &t, &hr, r);
 			khttp_template(r, &t, "tmpl/login.html");
+			}
 		}
 	else
 		{
 		open_head(r, KHTTP_405);
 		khttp_puts(r, "Method Not Allowed");
 		}
+	}
+
+static void
+handle_logout(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	char buf[64];
+
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "Not logged in");
+		return;
+		}
+
+	db_sess_del(p, dbid, NULL != r->cookiemap[PARAM_SESSCOOKIE] ? r->cookiemap[PARAM_SESSCOOKIE]->parsed.i : -1);
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/");
+	khttp_epoch2str(0, buf, sizeof(buf));
+	khttp_head(r, kresps[KRESP_SET_COOKIE], "s=; HttpOnly; path=/; expires=%s", buf);
+	khttp_body(r);
 	}
 
 int
@@ -368,6 +463,9 @@ main(void)
 			break;
 		case (PAGE_LOGIN):
 			handle_login(&r, p, dbid, u);
+			break;
+		case (PAGE_LOGOUT):
+			handle_logout(&r, p, dbid, u);
 			break;
 		default:
 			abort();
