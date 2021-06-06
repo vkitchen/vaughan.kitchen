@@ -9,6 +9,8 @@
 #include <stdint.h> /* int64_t */
 #include <inttypes.h> /* PRId64 */
 #include <time.h> /* time */
+#include <sys/queue.h> /* dep of lowdown */
+#include <lowdown.h>
 #include <sqlbox.h>
 #include <kcgi.h>
 #include <kcgihtml.h>
@@ -45,6 +47,7 @@ struct post_array
 
 struct tmpl_data
 	{
+	struct kreq       *r;
 	struct khtmlreq   *req;
 	struct user       *user;
 	struct post       *post;
@@ -236,8 +239,8 @@ db_post_fill(struct post *post, const struct sqlbox_parmset *res)
 		post->mtime = res->ps[5].iparm;
 
 	// content
-	if (res->psz >= 7 && res->ps[3].type == SQLBOX_PARM_STRING)
-		post->content = kstrdup(res->ps[3].sparm);
+	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
+		post->content = kstrdup(res->ps[6].sparm);
 	}
 
 void
@@ -540,6 +543,10 @@ template(size_t key, void *arg)
 	char buf[2048];
 	struct tmpl_data *data = arg;
 
+	struct lowdown_opts opts;
+	char *obuf;
+	size_t obufsz;
+
 	switch (key)
 		{
 		case (KEY_LOGIN_LOGOUT_LINK):
@@ -563,7 +570,27 @@ template(size_t key, void *arg)
 			khtml_int(data->req, data->post->mtime);
 			break;
 		case (KEY_CONTENT):
-			khtml_puts(data->req, data->post->content);
+			memset(&opts, 0, sizeof(struct lowdown_opts));
+			opts.type = LOWDOWN_HTML;
+			opts.feat = LOWDOWN_AUTOLINK
+				| LOWDOWN_COMMONMARK
+				| LOWDOWN_DEFLIST
+				| LOWDOWN_FENCED
+				| LOWDOWN_FOOTNOTES
+				| LOWDOWN_HILITE
+				| LOWDOWN_IMG_EXT
+				| LOWDOWN_MATH
+				| LOWDOWN_METADATA
+				| LOWDOWN_STRIKE
+				| LOWDOWN_SUPER
+				| LOWDOWN_TABLES
+				;
+			opts.oflags = LOWDOWN_HTML_OWASP
+				| LOWDOWN_HTML_NUM_ENT
+				;
+
+			lowdown_buf(&opts, data->post->content, strlen(data->post->content), &obuf, &obufsz, NULL);
+			khttp_write(data->r, obuf, obufsz);
 			break;
 		case (KEY_POSTS):
 			khtml_elem(data->req, KELEM_UL);
@@ -609,6 +636,7 @@ open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, 
 	if (khtml_open(hr, r, 0) != KCGI_OK)
 		errx(EXIT_FAILURE, "khtml_open");
 
+	data->r = r;
 	data->req = hr;
 
 	t->key = keys;

@@ -1,6 +1,6 @@
-CFLAGS = -Wall -Wextra -O2 -g `pkg-config --cflags kcgi-html sqlbox`
+CFLAGS = -Wall -Wextra -O2 -g `pkg-config --cflags kcgi-html sqlbox lowdown`
 
-LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox`
+LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox lowdown`
 
 .SUFFIXES: .c .o
 
