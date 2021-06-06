@@ -23,7 +23,7 @@ CREATE TABLE cv
 CREATE TABLE posts
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL
-	, slug TEXT NOT NULL
+	, slug TEXT NOT NULL UNIQUE
 	, snippet TEXT
 	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
@@ -36,7 +36,7 @@ CREATE TABLE posts
 CREATE TABLE recipes
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL
-	, slug TEXT NOT NULL
+	, slug TEXT NOT NULL UNIQUE
 	, snippet TEXT
 	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
