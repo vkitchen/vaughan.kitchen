@@ -49,6 +49,7 @@ enum page
 	{
 	PAGE_INDEX,
 	PAGE_CV,
+	PAGE_EDIT_CV,
 	PAGE_BLOG,
 	PAGE_POST,
 	PAGE_NEW_POST,
@@ -68,6 +69,7 @@ const char *const pages[PAGE__MAX] =
 	{
 	"index",
 	"cv",
+	"editcv",
 	"blag",
 	"post",
 	"newpost",
@@ -120,6 +122,7 @@ const struct kvalid params[PARAM__MAX] =
 enum key
 	{
 	KEY_LOGIN_LOGOUT_LINK,
+	KEY_EDIT_CV_LINK,
 	KEY_NEW_POST_LINK,
 	KEY_EDIT_POST_LINK,
 	KEY_EDIT_POST_PATH,
@@ -138,6 +141,7 @@ const char *keys[KEY__MAX] =
 	{
 	"login-logout-link",
 	/* post */
+	"edit-cv-link",
 	"new-post-link",
 	"edit-post-link",
 	"edit-post-path",
@@ -696,6 +700,15 @@ template(size_t key, void *arg)
 				khtml_closeelem(data->req, 1);
 				}
 			break;
+		case (KEY_EDIT_CV_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_BR);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/editcv", KATTR__MAX);
+				khtml_puts(data->req, "Edit CV");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
 		case (KEY_NEW_POST_LINK):
 			if (data->user != NULL)
 				{
@@ -758,8 +771,13 @@ template(size_t key, void *arg)
 				khtml_puts(data->req, data->post->snippet);
 			break;
 		case (KEY_MTIME):
-			khtml_int(data->req, data->post->mtime);
+			{
+			// TODO how do we get UTC?
+			struct tm* tm_info = localtime(&data->post->mtime);
+			strftime(buf, sizeof(buf), "%H:%M %d %b %Y", tm_info);
+			khtml_puts(data->req, buf);
 			break;
+			}
 		case (KEY_CONTENT):
 			if (data->raw)
 				khttp_puts(data->r, data->post->content);
@@ -891,6 +909,66 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
 	khttp_template(r, &t, "tmpl/cv.html");
+	}
+
+static void
+handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *content;
+
+		if ((content = r->fieldmap[PARAM_CONTENT]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		db_cv_update(p, dbid, content->val);
+
+		open_head(r, KHTTP_302);
+		khttp_head(r, kresps[KRESP_LOCATION], "/cv");
+		khttp_body(r);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		struct post *post = db_cv_get(p, dbid);
+		if (post == NULL)
+			{
+			open_response(r, KHTTP_200);
+			khttp_puts(r, "404 Not Found");
+			return;
+			}
+
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_EDIT_CV;
+		data.user = user;
+		data.post = post;
+		data.raw = 1;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template(r, &t, "tmpl/editcv.html");
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
 	}
 
 static void
@@ -1342,6 +1420,9 @@ main(void)
 			break;
 		case (PAGE_CV):
 			handle_cv(&r, p, dbid, u);
+			break;
+		case (PAGE_EDIT_CV):
+			handle_edit_cv(&r, p, dbid, u);
 			break;
 		case (PAGE_BLOG):
 			handle_blog(&r, p, dbid, u);
