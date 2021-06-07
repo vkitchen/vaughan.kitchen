@@ -45,6 +45,43 @@ struct post_array
 	struct post **store;
 	};
 
+struct ingredient
+	{
+	int64_t    id;
+	char      *name;
+	char      *measure;
+	char      *unit;
+	};
+
+struct ingredient_array
+	{
+	size_t capacity;
+	size_t length;
+	struct ingredient **store;
+	};
+
+struct cocktail
+	{
+	int64_t                  id;
+	char                    *title;
+	char                    *slug;
+	char                    *image;
+	time_t                   ctime;
+	time_t                   mtime;
+	char                    *serve;
+	char                    *garnish;
+	char                    *drinkware;
+	char                    *method;
+	struct ingredient_array *ingredients;
+	};
+
+struct cocktail_array
+	{
+	size_t capacity;
+	size_t length;
+	struct cocktail **store;
+	};
+
 enum page
 	{
 	PAGE_INDEX,
@@ -86,13 +123,23 @@ const char *const pages[PAGE__MAX] =
 
 struct tmpl_data
 	{
-	struct kreq       *r;
-	struct khtmlreq   *req;
-	enum page          page;
-	struct user       *user;
-	struct post       *post;
-	struct post_array *posts;
-	int                raw; /* don't render markdown */
+	struct kreq           *r;
+	struct khtmlreq       *req;
+	enum page              page;
+	char                  *head_title;
+	struct user           *user;
+	struct post           *post;
+	struct post_array     *posts;
+	struct cocktail_array *cocktails;
+	int                    raw; /* don't render markdown */
+	int                    page_no; /* pagination */
+	};
+
+struct drink_tmpl_data
+	{
+	struct kreq           *r;
+	struct khtmlreq       *req;
+	struct cocktail       *cocktail;
 	};
 
 enum param
@@ -121,6 +168,8 @@ const struct kvalid params[PARAM__MAX] =
 
 enum key
 	{
+	KEY_HEAD_TITLE,
+	KEY_NEXT_PAGE_LINK,
 	KEY_LOGIN_LOGOUT_LINK,
 	KEY_EDIT_CV_LINK,
 	KEY_NEW_POST_LINK,
@@ -134,11 +183,14 @@ enum key
 	KEY_MTIME,
 	KEY_CONTENT,
 	KEY_POSTS,
+	KEY_DRINKS,
 	KEY__MAX,
 	};
 
 const char *keys[KEY__MAX] =
 	{
+	"head-title",
+	"next-page-link",
 	"login-logout-link",
 	/* post */
 	"edit-cv-link",
@@ -154,6 +206,32 @@ const char *keys[KEY__MAX] =
 	"content", /* markdown content */
 	/* post list */
 	"posts",   /* list of posts */
+	"drinks",
+	};
+
+enum drink_key
+	{
+	DRINK_KEY_TITLE,
+	DRINK_KEY_HREF,
+	DRINK_KEY_IMG,
+	DRINK_KEY_DRINKWARE,
+	DRINK_KEY_SERVE,
+	DRINK_KEY_GARNISH,
+	DRINK_KEY_INGREDIENTS,
+	DRINK_KEY_METHOD,
+	DRINK_KEY__MAX,
+	};
+
+const char *drink_keys[DRINK_KEY__MAX] =
+	{
+	"drink-title",
+	"drink-href",
+	"drink-img",
+	"drink-drinkware",
+	"drink-serve",
+	"drink-garnish",
+	"drink-ingredients",
+	"drink-method",
 	};
 
 struct sqlbox_src srcs[] =
@@ -177,6 +255,9 @@ enum stmt
 	STMT_RECIPE_NEW,
 	STMT_RECIPE_UPDATE,
 	STMT_RECIPE_LIST,
+	STMT_COCKTAIL_GET,
+	STMT_COCKTAIL_LIST,
+	STMT_COCKTAIL_INGREDIENTS,
 	STMT__MAX,
 	};
 
@@ -213,11 +294,62 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
 	/* STMT_RECIPE_LIST */
 	{ .stmt = (char *)"SELECT " POST " FROM recipes ORDER BY ctime DESC" },
+	/* STMT_COCKTAIL_GET */
+	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails WHERE slug=?" },
+	/* STMT_COCKTAIL_LIST */
+	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails ORDER BY title ASC" },
+	/* STMT_COCKTAIL_INGREDIENTS */
+	{ .stmt = (char *)"SELECT id,name,measure,unit FROM cocktail_ingredients WHERE cocktail_id=? ORDER BY id ASC" },
 	};
+
+// TODO merge this into pointer array?
+// will we get type punning errors if we do that?
+struct cocktail_array *
+cocktail_array_new()
+	{
+	struct cocktail_array *a = kmalloc(sizeof(struct cocktail_array));
+	a->capacity = 256;
+	a->length = 0;
+	a->store = kmalloc(a->capacity * sizeof(struct cocktail *));
+	return a;
+	}
+
+void
+cocktail_array_append(struct cocktail_array *a, struct cocktail *c)
+	{
+	if (a->length == a->capacity)
+		{
+		a->capacity *= 2;
+		a->store = krealloc(a->store, a->capacity * sizeof(struct cocktail *));
+		}
+	a->store[a->length] = c;
+	a->length++;
+	}
+
+struct ingredient_array *
+ingredient_array_new()
+	{
+	struct ingredient_array *a = kmalloc(sizeof(struct ingredient_array));
+	a->capacity = 256;
+	a->length = 0;
+	a->store = kmalloc(a->capacity * sizeof(struct ingredient *));
+	return a;
+	}
+
+void
+ingredient_array_append(struct ingredient_array *a, struct ingredient *i)
+	{
+	if (a->length == a->capacity)
+		{
+		a->capacity *= 2;
+		a->store = krealloc(a->store, a->capacity * sizeof(struct ingredient *));
+		}
+	a->store[a->length] = i;
+	a->length++;
+	}
 
 void
 db_post_free(struct post *);
-
 
 struct post_array *
 post_array_new()
@@ -674,6 +806,209 @@ db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *sl
 		errx(EXIT_FAILURE, "sqlbox_finalise");
 	}
 
+struct ingredient_array *
+db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .iparm = cocktail_id, .type = SQLBOX_PARM_INT },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_INGREDIENTS, 1, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	struct ingredient_array *ingredients = ingredient_array_new();
+
+	const struct sqlbox_parmset *res;
+	for (;;)
+		{
+		if ((res = sqlbox_step(p, stmtid)) == NULL)
+			errx(EXIT_FAILURE, "sqlbox_step");
+
+		if (res->code != SQLBOX_CODE_OK)
+			errx(EXIT_FAILURE, "res.code");
+
+		// no results or done
+		if (res->psz == 0)
+			break;
+
+		struct ingredient *ingredient = kmalloc(sizeof(struct ingredient));
+		memset(ingredient, 0, sizeof(struct ingredient));
+
+		// id
+		if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
+			ingredient->id = res->ps[0].iparm;
+
+		// name
+		if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
+			ingredient->name = kstrdup(res->ps[1].sparm);
+
+		// measure
+		if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
+			ingredient->measure = kstrdup(res->ps[2].sparm);
+
+		// unit
+		if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
+			ingredient->unit = kstrdup(res->ps[3].sparm);
+
+		ingredient_array_append(ingredients, ingredient);
+		}
+
+	// no results
+	if (ingredients->length == 0)
+		{
+		// TODO free
+		ingredients = NULL;
+		}
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return ingredients;
+	}
+
+void
+db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
+	{
+	// id
+	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
+		cocktail->id = res->ps[0].iparm;
+
+	// title
+	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
+		cocktail->title = kstrdup(res->ps[1].sparm);
+
+	// slug
+	if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
+		cocktail->slug = kstrdup(res->ps[2].sparm);
+
+	// image
+	if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
+		cocktail->image = kstrdup(res->ps[3].sparm);
+
+	// ctime
+	if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
+		cocktail->ctime = res->ps[4].iparm;
+
+	// mtime
+	if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_INT)
+		cocktail->mtime = res->ps[5].iparm;
+
+	// serve
+	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
+		cocktail->serve = kstrdup(res->ps[6].sparm);
+
+	// garnish
+	if (res->psz >= 8 && res->ps[7].type == SQLBOX_PARM_STRING)
+		cocktail->garnish = kstrdup(res->ps[7].sparm);
+
+	// drinkware
+	if (res->psz >= 9 && res->ps[8].type == SQLBOX_PARM_STRING)
+		cocktail->drinkware = kstrdup(res->ps[8].sparm);
+
+	// method
+	if (res->psz >= 10 && res->ps[9].type == SQLBOX_PARM_STRING)
+		cocktail->method = kstrdup(res->ps[9].sparm);
+	}
+
+struct cocktail_array *
+db_cocktail_list(struct sqlbox *p, size_t dbid)
+	{
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_LIST, 0, NULL, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	struct cocktail_array *cocktails = cocktail_array_new();
+
+	const struct sqlbox_parmset *res;
+	for (;;)
+		{
+		if ((res = sqlbox_step(p, stmtid)) == NULL)
+			errx(EXIT_FAILURE, "sqlbox_step");
+
+		if (res->code != SQLBOX_CODE_OK)
+			errx(EXIT_FAILURE, "res.code");
+
+		// no results or done
+		if (res->psz == 0)
+			break;
+
+		struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
+		memset(cocktail, 0, sizeof(struct cocktail));
+
+		db_cocktail_fill(cocktail, res);
+		cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
+
+		cocktail_array_append(cocktails, cocktail);
+		}
+
+	// no results
+	if (cocktails->length == 0)
+		{
+		// TODO free
+		cocktails = NULL;
+		}
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return cocktails;
+	}
+
+static int
+drink_template(size_t key, void *arg)
+	{
+	struct drink_tmpl_data *data = arg;
+
+	switch (key)
+		{
+		case (DRINK_KEY_TITLE):
+			khtml_puts(data->req, data->cocktail->title);
+			break;
+		case (DRINK_KEY_HREF):
+			khtml_puts(data->req, data->cocktail->slug);
+			break;
+		case (DRINK_KEY_IMG):
+			khtml_puts(data->req, data->cocktail->image);
+			break;
+		case (DRINK_KEY_DRINKWARE):
+			if (data->cocktail->drinkware != NULL)
+				khtml_puts(data->req, data->cocktail->drinkware);
+			break;
+		case (DRINK_KEY_SERVE):
+			if (data->cocktail->serve != NULL)
+				khtml_puts(data->req, data->cocktail->serve);
+			break;
+		case (DRINK_KEY_GARNISH):
+			if (data->cocktail->garnish != NULL)
+				khtml_puts(data->req, data->cocktail->garnish);
+			break;
+		case (DRINK_KEY_INGREDIENTS):
+			for (size_t i = 0; i < data->cocktail->ingredients->length; i++)
+				{
+				khtml_elem(data->req, KELEM_LI);
+				khtml_puts(data->req, data->cocktail->ingredients->store[i]->name);
+				khtml_puts(data->req, " ");
+				khtml_puts(data->req, data->cocktail->ingredients->store[i]->measure);
+				khtml_puts(data->req, " ");
+				khtml_puts(data->req, data->cocktail->ingredients->store[i]->unit);
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (DRINK_KEY_METHOD):
+			if (data->cocktail->method != NULL)
+				khtml_puts(data->req, data->cocktail->method);
+			break;
+		default:
+			abort();
+		}
+
+	return 1;
+	}
+
 static int
 template(size_t key, void *arg)
 	{
@@ -686,6 +1021,11 @@ template(size_t key, void *arg)
 
 	switch (key)
 		{
+		case (KEY_HEAD_TITLE):
+			khtml_puts(data->req, data->head_title);
+			break;
+		case (KEY_NEXT_PAGE_LINK):
+			break;
 		case (KEY_LOGIN_LOGOUT_LINK):
 			if (data->user == NULL)
 				{
@@ -827,6 +1167,29 @@ template(size_t key, void *arg)
 					}
 				khtml_closeelem(data->req, 1);
 				}
+			break;
+		case (KEY_DRINKS):
+			{
+			struct ktemplate t;
+			memset(&t, 0, sizeof(struct ktemplate));
+
+			struct drink_tmpl_data d;
+			memset(&d, 0, sizeof(struct drink_tmpl_data));
+			d.r = data->r;
+			d.req = data->req;
+
+			t.key = drink_keys;
+			t.keysz = DRINK_KEY__MAX;
+			t.cb = drink_template;
+			t.arg = &d;
+
+			for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
+				{
+				d.cocktail = data->cocktails->store[i];
+				// TODO probably rereading a few hundred times is a bad idea
+				khttp_template(data->r, &t, "tmpl/drink_snippet.html");
+				}
+			}
 			break;
 		default:
 			abort();
@@ -1129,10 +1492,25 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 	}
 
 static void
-handle_cocktails(struct kreq *r)
+handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	struct post post;
+	memset(&post, 0, sizeof(struct post));
+	post.title = "All Drinks";
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_COCKTAILS;
+	data.head_title = "All Drinks";
+	data.post = &post;
+	data.cocktails = db_cocktail_list(p, dbid);
+
 	open_response(r, KHTTP_200);
-	khttp_puts(r, "Not implemented yet");
+	open_template(&data, &t, &hr, r);
+	khttp_template(r, &t, "tmpl/drinks_list.html");
 	}
 
 static void
@@ -1437,7 +1815,7 @@ main(void)
 			handle_edit_post(&r, p, dbid, u);
 			break;
 		case (PAGE_COCKTAILS):
-			handle_cocktails(&r);
+			handle_cocktails(&r, p, dbid);
 			break;
 		case (PAGE_RECIPES):
 			handle_recipes(&r, p, dbid, u);
