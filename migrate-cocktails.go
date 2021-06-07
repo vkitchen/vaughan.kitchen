@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 	"path/filepath"
 	"encoding/json"
 	"io/ioutil"
@@ -56,7 +57,7 @@ func main() {
 		}
 		res, err := db.Exec("INSERT INTO cocktails (title, slug, image, serve, garnish, drinkware, method) VALUES (?,?,?,?,?,?,?)",
 			d.Name,
-			d.Name,
+			strings.ReplaceAll(d.Name, " ", "+"),
 			img,
 			d.Serve,
 			d.Garnish,

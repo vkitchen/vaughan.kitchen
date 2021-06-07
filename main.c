@@ -4,6 +4,7 @@
 #include <unistd.h> /* pledge */
 #include <err.h> /* err */
 #include <sys/types.h> /* size_t, ssize_t */
+#include <sys/stat.h> /* struct stat */
 #include <stdarg.h> /* va_list */
 #include <stddef.h> /* NULL */
 #include <stdint.h> /* int64_t */
@@ -85,6 +86,9 @@ struct cocktail_array
 enum page
 	{
 	PAGE_INDEX,
+	PAGE_CSS,
+	/* had weird issues with /static */
+	PAGE_IMG,
 	PAGE_CV,
 	PAGE_EDIT_CV,
 	PAGE_BLOG,
@@ -105,6 +109,8 @@ enum page
 const char *const pages[PAGE__MAX] =
 	{
 	"index",
+	"css",
+	"img",
 	"cv",
 	"editcv",
 	"blag",
@@ -301,6 +307,31 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	/* STMT_COCKTAIL_INGREDIENTS */
 	{ .stmt = (char *)"SELECT id,name,measure,unit FROM cocktail_ingredients WHERE cocktail_id=? ORDER BY id ASC" },
 	};
+
+size_t file_slurp(char const *filename, char **into)
+	{
+	FILE *fh;
+	struct stat details;
+	size_t file_length = 0;
+
+	if ((fh = fopen(filename, "rb")) != NULL)
+		{
+		if (fstat(fileno(fh), &details) == 0)
+			if ((file_length = details.st_size) != 0)
+				{
+				*into = (char *)malloc(file_length + 1);
+				(*into)[file_length] = '\0';
+				if (fread(*into, details.st_size, 1, fh) != 1)
+					{
+					free(*into);
+					file_length = 0;
+					}
+				}
+		fclose(fh);
+		}
+
+	return file_length;
+	}
 
 // TODO merge this into pointer array?
 // will we get type punning errors if we do that?
@@ -913,6 +944,47 @@ db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
 		cocktail->method = kstrdup(res->ps[9].sparm);
 	}
 
+struct cocktail *
+db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_GET, 1, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// no results
+	if (res->psz == 0)
+		{
+		if (!sqlbox_finalise(p, stmtid))
+			errx(EXIT_FAILURE, "sqlbox_finalise");
+
+		return NULL;
+		}
+
+	struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
+	memset(cocktail, 0, sizeof(struct cocktail));
+
+	db_cocktail_fill(cocktail, res);
+	cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return cocktail;
+	}
+
 struct cocktail_array *
 db_cocktail_list(struct sqlbox *p, size_t dbid)
 	{
@@ -961,6 +1033,7 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 static int
 drink_template(size_t key, void *arg)
 	{
+	char buf[2048];
 	struct drink_tmpl_data *data = arg;
 
 	switch (key)
@@ -969,10 +1042,17 @@ drink_template(size_t key, void *arg)
 			khtml_puts(data->req, data->cocktail->title);
 			break;
 		case (DRINK_KEY_HREF):
-			khtml_puts(data->req, data->cocktail->slug);
+			snprintf(buf, sizeof(buf), "/cocktails/drinks/%s", data->cocktail->slug);
+			khtml_puts(data->req, buf);
 			break;
 		case (DRINK_KEY_IMG):
-			khtml_puts(data->req, data->cocktail->image);
+			if (data->cocktail->image == NULL || data->cocktail->image[0] == '\0')
+				khtml_puts(data->req, "/img/Cocktail%20Glass.svg");
+			else
+				{
+				snprintf(buf, sizeof(buf), "/img/%s", data->cocktail->image);
+				khtml_puts(data->req, buf);
+				}
 			break;
 		case (DRINK_KEY_DRINKWARE):
 			if (data->cocktail->drinkware != NULL)
@@ -1183,7 +1263,9 @@ template(size_t key, void *arg)
 			t.cb = drink_template;
 			t.arg = &d;
 
-			for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
+			// TODO remimplement pagination
+			// for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
+			for (size_t i = 0; i < data->cocktails->length; i++)
 				{
 				d.cocktail = data->cocktails->store[i];
 				// TODO probably rereading a few hundred times is a bad idea
@@ -1246,6 +1328,37 @@ handle_index(struct kreq *r, struct user *user)
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
 	khttp_template(r, &t, "tmpl/index.html");
+	}
+
+static void
+handle_static(struct kreq *r)
+	{
+	char buf[2048];
+	char *page_data;
+	size_t file_length = 0;
+
+	snprintf(buf, sizeof(buf), "static%s", r->fullpath);
+
+	file_length = file_slurp(buf, &page_data);
+	if (file_length == 0)
+		{
+		open_response(r, KHTTP_404);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+	enum kmime mime;
+
+	/*
+	 * Unknown mime -> octet-stream for binary files
+	 */
+	if ((mime = r->mime) == KMIME__MAX)
+		mime = KMIME_APP_OCTET_STREAM;
+
+	khttp_head(r, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
+	khttp_head(r, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
+	khttp_body(r);
+	khttp_write(r, page_data, file_length);
 	}
 
 static void
@@ -1492,11 +1605,41 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 	}
 
 static void
+handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
+	{
+	struct drink_tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&t, 0, sizeof(struct ktemplate));
+	memset(&hr, 0, sizeof(struct khtmlreq));
+
+	if (khtml_open(&hr, r, 0) != KCGI_OK)
+		errx(EXIT_FAILURE, "khtml_open");
+
+	data.r = r;
+	data.req = &hr;
+	data.cocktail = db_cocktail_get(p, dbid, drink);
+
+	t.key = drink_keys;
+	t.keysz = DRINK_KEY__MAX;
+	t.arg = (void *)&data;
+	t.cb = drink_template;
+
+	open_response(r, KHTTP_200);
+	khttp_template(r, &t, "tmpl/drink.html");
+	}
+
+static void
 handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+
+	char *drink;
+	if ((drink = strstr(r->path, "drinks/")) != NULL)
+		return handle_cocktail(r, p, dbid, &r->path[strlen("drinks/")]);
 
 	struct post post;
 	memset(&post, 0, sizeof(struct post));
@@ -1795,6 +1938,10 @@ main(void)
 		{
 		case (PAGE_INDEX):
 			handle_index(&r, u);
+			break;
+		case (PAGE_CSS):
+		case (PAGE_IMG):
+			handle_static(&r);
 			break;
 		case (PAGE_CV):
 			handle_cv(&r, p, dbid, u);
