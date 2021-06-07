@@ -45,24 +45,19 @@ struct post_array
 	struct post **store;
 	};
 
-struct tmpl_data
-	{
-	struct kreq       *r;
-	struct khtmlreq   *req;
-	struct user       *user;
-	struct post       *post;
-	struct post_array *posts;
-	};
-
 enum page
 	{
 	PAGE_INDEX,
 	PAGE_CV,
 	PAGE_BLOG,
 	PAGE_POST,
+	PAGE_NEW_POST,
+	PAGE_EDIT_POST,
 	PAGE_COCKTAILS,
 	PAGE_RECIPES,
 	PAGE_RECIPE,
+	PAGE_NEW_RECIPE,
+	PAGE_EDIT_RECIPE,
 	PAGE_GAMES,
 	PAGE_LOGIN,
 	PAGE_LOGOUT,
@@ -75,12 +70,27 @@ const char *const pages[PAGE__MAX] =
 	"cv",
 	"blag",
 	"post",
+	"newpost",
+	"editpost",
 	"cocktails",
 	"recipes",
 	"recipe",
+	"newrecipe",
+	"editrecipe",
 	"games",
 	"login",
 	"logout",
+	};
+
+struct tmpl_data
+	{
+	struct kreq       *r;
+	struct khtmlreq   *req;
+	enum page          page;
+	struct user       *user;
+	struct post       *post;
+	struct post_array *posts;
+	int                raw; /* don't render markdown */
 	};
 
 enum param
@@ -88,6 +98,10 @@ enum param
 	PARAM_USERNAME,
 	PARAM_PASSWORD,
 	PARAM_SESSCOOKIE,
+	PARAM_TITLE,
+	PARAM_SLUG,
+	PARAM_SNIPPET,
+	PARAM_CONTENT,
 	PARAM__MAX,
 	};
 
@@ -96,12 +110,24 @@ const struct kvalid params[PARAM__MAX] =
 	{ kvalid_stringne, "username" },
 	{ kvalid_stringne, "password" },
 	{ kvalid_uint, "s" },
+	/* post */
+	{ kvalid_stringne, "title" },
+	{ kvalid_stringne, "slug" },
+	{ kvalid_stringne, "snippet" },
+	{ kvalid_stringne, "content" },
 	};
 
 enum key
 	{
 	KEY_LOGIN_LOGOUT_LINK,
+	KEY_NEW_POST_LINK,
+	KEY_EDIT_POST_LINK,
+	KEY_EDIT_POST_PATH,
+	KEY_NEW_RECIPE_LINK,
+	KEY_EDIT_RECIPE_LINK,
+	KEY_EDIT_RECIPE_PATH,
 	KEY_TITLE,
+	KEY_SNIPPET,
 	KEY_MTIME,
 	KEY_CONTENT,
 	KEY_POSTS,
@@ -112,7 +138,14 @@ const char *keys[KEY__MAX] =
 	{
 	"login-logout-link",
 	/* post */
+	"new-post-link",
+	"edit-post-link",
+	"edit-post-path",
+	"new-recipe-link",
+	"edit-recipe-link",
+	"edit-recipe-path",
 	"title",
+	"snippet",
 	"mtime",
 	"content", /* markdown content */
 	/* post list */
@@ -131,9 +164,14 @@ enum stmt
 	STMT_SESS_NEW,
 	STMT_SESS_DEL,
 	STMT_CV_GET,
+	STMT_CV_UPDATE,
 	STMT_POST_GET,
+	STMT_POST_NEW,
+	STMT_POST_UPDATE,
 	STMT_POST_LIST,
 	STMT_RECIPE_GET,
+	STMT_RECIPE_NEW,
+	STMT_RECIPE_UPDATE,
 	STMT_RECIPE_LIST,
 	STMT__MAX,
 	};
@@ -141,7 +179,7 @@ enum stmt
 #define USER "users.id,users.display,users.login"
 #define POST "id,title,slug,snippet,ctime,mtime,content"
 
-struct sqlbox_pstmt pstmts[] =
+struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{
 	/* STMT_USER_GET */
 	{ .stmt = (char *)"SELECT " USER ",users.shadow FROM users WHERE login=?" },
@@ -153,12 +191,22 @@ struct sqlbox_pstmt pstmts[] =
 	{ .stmt = (char *)"DELETE FROM sessions WHERE cookie=?" },
 	/* STMT_CV_GET */
 	{ .stmt = (char *)"SELECT mtime,content FROM cv WHERE id=1" },
+	/* STMT_CV_UPDATE */
+	{ .stmt = (char *)"UPDATE cv SET mtime=?,content=? WHERE id=1" },
 	/* STMT_POST_GET */
 	{ .stmt = (char *)"SELECT " POST " FROM posts WHERE slug=?" },
+	/* STMT_POST_NEW */
+	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
+	/* STMT_POST_UPDATE */
+	{ .stmt = (char *)"UPDATE posts SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
 	/* STMT_POST_LIST */
 	{ .stmt = (char *)"SELECT " POST " FROM posts ORDER BY ctime DESC" },
 	/* STMT_RECIPE_GET */
 	{ .stmt = (char *)"SELECT " POST " FROM recipes WHERE slug=?" },
+	/* STMT_RECIPE_NEW */
+	{ .stmt = (char *)"INSERT INTO recipes (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
+	/* STMT_RECIPE_UPDATE */
+	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
 	/* STMT_RECIPE_LIST */
 	{ .stmt = (char *)"SELECT " POST " FROM recipes ORDER BY ctime DESC" },
 	};
@@ -454,6 +502,34 @@ db_cv_get(struct sqlbox *p, size_t dbid)
 	return post;
 	}
 
+void
+db_cv_update(struct sqlbox *p, size_t dbid, char *content)
+	{
+	time_t mtime = time(NULL);
+
+	struct sqlbox_parm parms[] =
+		{
+		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
+		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_CV_UPDATE, 2, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
+// TODO restrict statements
 struct post_array *
 db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
 	{
@@ -537,6 +613,63 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, char *slug)
 	return post;
 	}
 
+void
+db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *slug, char *snippet, char *content)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
+		{ .sparm = snippet, .type = SQLBOX_PARM_STRING },
+		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 4, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
+void
+db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *slug, char *snippet, char *content)
+	{
+	time_t mtime = time(NULL);
+
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .sparm = snippet, .type = SQLBOX_PARM_STRING },
+		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
+		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 5, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
 static int
 template(size_t key, void *arg)
 	{
@@ -563,47 +696,119 @@ template(size_t key, void *arg)
 				khtml_closeelem(data->req, 1);
 				}
 			break;
+		case (KEY_NEW_POST_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_BR);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/newpost", KATTR__MAX);
+				khtml_puts(data->req, "New Post");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_EDIT_POST_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_BR);
+				snprintf(buf, sizeof(buf), "/editpost/%s", data->post->slug);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+				khtml_puts(data->req, "Edit Post");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_EDIT_POST_PATH):
+			if (data->user != NULL)
+				{
+				snprintf(buf, sizeof(buf), "/editpost/%s", data->post->slug);
+				khtml_puts(data->req, buf);
+				}
+			break;
+		case (KEY_NEW_RECIPE_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_BR);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/newrecipe", KATTR__MAX);
+				khtml_puts(data->req, "New Recipe");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_EDIT_RECIPE_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_BR);
+				snprintf(buf, sizeof(buf), "/editrecipe/%s", data->post->slug);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+				khtml_puts(data->req, "Edit Recipe");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_EDIT_RECIPE_PATH):
+			if (data->user != NULL)
+				{
+				snprintf(buf, sizeof(buf), "/editrecipe/%s", data->post->slug);
+				khtml_puts(data->req, buf);
+				}
+			break;
 		case (KEY_TITLE):
 			khtml_puts(data->req, data->post->title);
+			break;
+		case (KEY_SNIPPET):
+			if (data->raw)
+				khttp_puts(data->r, data->post->snippet);
+			else
+				khtml_puts(data->req, data->post->snippet);
 			break;
 		case (KEY_MTIME):
 			khtml_int(data->req, data->post->mtime);
 			break;
 		case (KEY_CONTENT):
-			memset(&opts, 0, sizeof(struct lowdown_opts));
-			opts.type = LOWDOWN_HTML;
-			opts.feat = LOWDOWN_AUTOLINK
-				| LOWDOWN_COMMONMARK
-				| LOWDOWN_DEFLIST
-				| LOWDOWN_FENCED
-				| LOWDOWN_FOOTNOTES
-				| LOWDOWN_HILITE
-				| LOWDOWN_IMG_EXT
-				| LOWDOWN_MATH
-				| LOWDOWN_METADATA
-				| LOWDOWN_STRIKE
-				| LOWDOWN_SUPER
-				| LOWDOWN_TABLES
-				;
-			opts.oflags = LOWDOWN_HTML_OWASP
-				| LOWDOWN_HTML_NUM_ENT
-				;
+			if (data->raw)
+				khttp_puts(data->r, data->post->content);
+			else
+				{
+				memset(&opts, 0, sizeof(struct lowdown_opts));
+				opts.type = LOWDOWN_HTML;
+				opts.feat = LOWDOWN_AUTOLINK
+					| LOWDOWN_COMMONMARK
+					| LOWDOWN_DEFLIST
+					| LOWDOWN_FENCED
+					| LOWDOWN_FOOTNOTES
+					| LOWDOWN_HILITE
+					| LOWDOWN_IMG_EXT
+					| LOWDOWN_MATH
+					| LOWDOWN_METADATA
+					| LOWDOWN_STRIKE
+					| LOWDOWN_SUPER
+					| LOWDOWN_TABLES
+					;
+				opts.oflags = LOWDOWN_HTML_OWASP
+					| LOWDOWN_HTML_NUM_ENT
+					;
 
-			lowdown_buf(&opts, data->post->content, strlen(data->post->content), &obuf, &obufsz, NULL);
-			khttp_write(data->r, obuf, obufsz);
+				lowdown_buf(&opts, data->post->content, strlen(data->post->content), &obuf, &obufsz, NULL);
+				khttp_write(data->r, obuf, obufsz);
+				}
 			break;
 		case (KEY_POSTS):
-			khtml_elem(data->req, KELEM_UL);
-			// link to each post
-			for (size_t i = 0; i < data->posts->length; i++)
+			if (data->posts == NULL)
+				khtml_puts(data->req, "Nothing here yet");
+			else
 				{
-				khtml_elem(data->req, KELEM_LI);
-				snprintf(buf, sizeof(buf), "/post/%s", data->posts->store[i]->slug);
-				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
-				khtml_puts(data->req, data->posts->store[i]->title);
-				khtml_closeelem(data->req, 2);
+				khtml_elem(data->req, KELEM_UL);
+				// link to each post
+				for (size_t i = 0; i < data->posts->length; i++)
+					{
+					khtml_elem(data->req, KELEM_LI);
+					// TODO this seems hacky
+					if (data->page == PAGE_BLOG)
+						snprintf(buf, sizeof(buf), "/post/%s", data->posts->store[i]->slug);
+					if (data->page == PAGE_RECIPES)
+						snprintf(buf, sizeof(buf), "/recipe/%s", data->posts->store[i]->slug);
+					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+					khtml_puts(data->req, data->posts->store[i]->title);
+					khtml_closeelem(data->req, 2);
+					}
+				khtml_closeelem(data->req, 1);
 				}
-			khtml_closeelem(data->req, 1);
 			break;
 		default:
 			abort();
@@ -654,6 +859,7 @@ handle_index(struct kreq *r, struct user *user)
 	struct khtmlreq hr;
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_INDEX;
 	data.user = user;
 
 	open_response(r, KHTTP_200);
@@ -677,8 +883,10 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_CV;
 	data.user = user;
 	data.post = post;
+	data.raw = 1;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -692,17 +900,10 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post_array *posts = db_post_list(p, dbid, STMT_POST_LIST);
-	if (posts == NULL)
-		{
-		open_response(r, KHTTP_200);
-		khttp_puts(r, "No posts yet");
-		return;
-		}
-
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_BLOG;
 	data.user = user;
-	data.posts = posts;
+	data.posts = db_post_list(p, dbid, STMT_POST_LIST);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -725,6 +926,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_POST;
 	data.user = user;
 	data.post = post;
 
@@ -734,7 +936,122 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_cocktails(struct kreq *r, struct user *user)
+handle_new_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *title, *slug, *snippet, *content;
+
+		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+		    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
+		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		db_post_new(p, dbid, STMT_POST_NEW, title->val, slug->val, snippet->val, content->val);
+
+		open_head(r, KHTTP_302);
+		khttp_head(r, kresps[KRESP_LOCATION], "/blag");
+		khttp_body(r);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_NEW_POST;
+		data.user = user;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template(r, &t, "tmpl/newpost.html");
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
+	}
+
+static void
+handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *title, *snippet, *content;
+
+		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		db_post_update(p, dbid, STMT_POST_UPDATE, title->val, r->path, snippet->val, content->val);
+
+		open_head(r, KHTTP_302);
+		khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
+		khttp_body(r);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
+		if (post == NULL)
+			{
+			open_response(r, KHTTP_200);
+			khttp_puts(r, "404 Not Found");
+			return;
+			}
+
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_EDIT_POST;
+		data.user = user;
+		data.post = post;
+		data.raw = 1;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template(r, &t, "tmpl/editpost.html");
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
+	}
+
+static void
+handle_cocktails(struct kreq *r)
 	{
 	open_response(r, KHTTP_200);
 	khttp_puts(r, "Not implemented yet");
@@ -747,21 +1064,129 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post_array *posts = db_post_list(p, dbid, STMT_RECIPE_LIST);
-	if (posts == NULL)
-		{
-		open_response(r, KHTTP_200);
-		khttp_puts(r, "No recipes yet");
-		return;
-		}
-
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_RECIPES;
 	data.user = user;
-	data.posts = posts;
+	data.posts = db_post_list(p, dbid, STMT_RECIPE_LIST);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/blog.html");
+	khttp_template(r, &t, "tmpl/recipes.html");
+	}
+
+static void
+handle_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *title, *slug, *snippet, *content;
+
+		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+		    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
+		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		db_post_new(p, dbid, STMT_RECIPE_NEW, title->val, slug->val, snippet->val, content->val);
+
+		open_head(r, KHTTP_302);
+		khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
+		khttp_body(r);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_NEW_RECIPE;
+		data.user = user;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template(r, &t, "tmpl/newrecipe.html");
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
+	}
+
+static void
+handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_200);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *title, *snippet, *content;
+
+		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->val, r->path, snippet->val, content->val);
+
+		open_head(r, KHTTP_302);
+		khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);
+		khttp_body(r);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
+		if (post == NULL)
+			{
+			open_response(r, KHTTP_200);
+			khttp_puts(r, "404 Not Found");
+			return;
+			}
+
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_EDIT_RECIPE;
+		data.user = user;
+		data.post = post;
+		data.raw = 1;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template(r, &t, "tmpl/editrecipe.html");
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
 	}
 
 static void
@@ -780,16 +1205,17 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_RECIPE;
 	data.user = user;
 	data.post = post;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/post.html");
+	khttp_template(r, &t, "tmpl/recipe.html");
 	}
 
 static void
-handle_games(struct kreq *r, struct user *user)
+handle_games(struct kreq *r)
 	{
 	open_response(r, KHTTP_200);
 	khttp_puts(r, "Not implemented yet");
@@ -823,7 +1249,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		open_head(r, KHTTP_302);
 		khttp_head(r, kresps[KRESP_LOCATION], "/");
 
-		struct user *user = db_user_get(p, dbid, r->fields[0].val, r->fields[1].val);
+		struct user *user = db_user_get(p, dbid, username->val, password->val);
 		if (user != NULL)
 			{
 			cookie = arc4random();
@@ -923,8 +1349,14 @@ main(void)
 		case (PAGE_POST):
 			handle_post(&r, p, dbid, u);
 			break;
+		case (PAGE_NEW_POST):
+			handle_new_post(&r, p, dbid, u);
+			break;
+		case (PAGE_EDIT_POST):
+			handle_edit_post(&r, p, dbid, u);
+			break;
 		case (PAGE_COCKTAILS):
-			handle_cocktails(&r, u);
+			handle_cocktails(&r);
 			break;
 		case (PAGE_RECIPES):
 			handle_recipes(&r, p, dbid, u);
@@ -932,8 +1364,14 @@ main(void)
 		case (PAGE_RECIPE):
 			handle_recipe(&r, p, dbid, u);
 			break;
+		case (PAGE_NEW_RECIPE):
+			handle_new_recipe(&r, p, dbid, u);
+			break;
+		case (PAGE_EDIT_RECIPE):
+			handle_edit_recipe(&r, p, dbid, u);
+			break;
 		case (PAGE_GAMES):
-			handle_games(&r, u);
+			handle_games(&r);
 			break;
 		case (PAGE_LOGIN):
 			handle_login(&r, p, dbid, u);

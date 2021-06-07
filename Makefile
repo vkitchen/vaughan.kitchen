@@ -19,8 +19,8 @@ clean:
 	rm -f main main.o $(OBJECTS)
 
 upload:
-	rsync -avz --exclude='.git/' --exclude='design' . deltacephei:~/vaughan.kitchen
+	rsync -avz --exclude='.git/' --exclude='design' --exclude='db' . deltacephei:~/vaughan.kitchen
 
 dev:
-	rsync -av --exclude='.git/' --exclude='design' . /var/www/htdocs/vaughan.kitchen
+	rsync -av --exclude='.git/' --exclude='design' --exclude='db' . /var/www/htdocs/vaughan.kitchen
 
