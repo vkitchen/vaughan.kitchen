@@ -49,6 +49,7 @@ CREATE TABLE cocktails
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL
 	, slug TEXT NOT NULL
+	, image TEXT
 	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
 	, serve TEXT
