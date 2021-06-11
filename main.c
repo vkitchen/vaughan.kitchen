@@ -86,9 +86,6 @@ struct cocktail_array
 enum page
 	{
 	PAGE_INDEX,
-	PAGE_CSS,
-	/* had weird issues with /static */
-	PAGE_IMG,
 	PAGE_CV,
 	PAGE_EDIT_CV,
 	PAGE_BLOG,
@@ -109,8 +106,6 @@ enum page
 const char *const pages[PAGE__MAX] =
 	{
 	"index",
-	"css",
-	"img",
 	"cv",
 	"editcv",
 	"blag",
@@ -1053,10 +1048,10 @@ drink_template(size_t key, void *arg)
 			break;
 		case (DRINK_KEY_IMG):
 			if (data->cocktail->image == NULL || data->cocktail->image[0] == '\0')
-				khtml_puts(data->req, "/img/Cocktail%20Glass.svg");
+				khtml_puts(data->req, "/static/img/Cocktail%20Glass.svg");
 			else
 				{
-				snprintf(buf, sizeof(buf), "/img/%s", data->cocktail->image);
+				snprintf(buf, sizeof(buf), "/static/img/%s", data->cocktail->image);
 				khtml_puts(data->req, buf);
 				}
 			break;
@@ -1334,37 +1329,6 @@ handle_index(struct kreq *r, struct user *user)
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
 	khttp_template(r, &t, "tmpl/index.html");
-	}
-
-static void
-handle_static(struct kreq *r)
-	{
-	char buf[2048];
-	char *page_data;
-	size_t file_length = 0;
-
-	snprintf(buf, sizeof(buf), "static%s", r->fullpath);
-
-	file_length = file_slurp(buf, &page_data);
-	if (file_length == 0)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
-
-	enum kmime mime;
-
-	/*
-	 * Unknown mime -> octet-stream for binary files
-	 */
-	if ((mime = r->mime) == KMIME__MAX)
-		mime = KMIME_APP_OCTET_STREAM;
-
-	khttp_head(r, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
-	khttp_head(r, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
-	khttp_body(r);
-	khttp_write(r, page_data, file_length);
 	}
 
 static void
@@ -1944,10 +1908,6 @@ main(void)
 		{
 		case (PAGE_INDEX):
 			handle_index(&r, u);
-			break;
-		case (PAGE_CSS):
-		case (PAGE_IMG):
-			handle_static(&r);
 			break;
 		case (PAGE_CV):
 			handle_cv(&r, p, dbid, u);
