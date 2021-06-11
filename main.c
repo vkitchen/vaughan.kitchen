@@ -251,8 +251,8 @@ enum stmt
 	STMT_SESS_GET,
 	STMT_SESS_NEW,
 	STMT_SESS_DEL,
-	STMT_CV_GET,
-	STMT_CV_UPDATE,
+	STMT_PAGE_GET,
+	STMT_PAGE_UPDATE,
 	STMT_POST_GET,
 	STMT_POST_NEW,
 	STMT_POST_UPDATE,
@@ -280,10 +280,10 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"INSERT INTO sessions (cookie,user_id) VALUES (?,?)" },
 	/* STMT_SESS_DEL */
 	{ .stmt = (char *)"DELETE FROM sessions WHERE cookie=?" },
-	/* STMT_CV_GET */
-	{ .stmt = (char *)"SELECT mtime,content FROM cv WHERE id=1" },
-	/* STMT_CV_UPDATE */
-	{ .stmt = (char *)"UPDATE cv SET mtime=?,content=? WHERE id=1" },
+	/* STMT_PAGE_GET */
+	{ .stmt = (char *)"SELECT mtime,content FROM pages WHERE title=?" },
+	/* STMT_PAGE_UPDATE */
+	{ .stmt = (char *)"UPDATE pages SET mtime=?,content=? WHERE title=?" },
 	/* STMT_POST_GET */
 	{ .stmt = (char *)"SELECT " POST " FROM posts WHERE slug=?" },
 	/* STMT_POST_NEW */
@@ -629,10 +629,15 @@ db_sess_del(struct sqlbox *p, size_t dbid, int64_t cookie)
 	}
 
 struct post *
-db_cv_get(struct sqlbox *p, size_t dbid)
+db_page_get(struct sqlbox *p, size_t dbid, char *page)
 	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = page, .type = SQLBOX_PARM_STRING },
+		};
+
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_CV_GET, 0, NULL, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_PAGE_GET, 1, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -670,7 +675,7 @@ db_cv_get(struct sqlbox *p, size_t dbid)
 	}
 
 void
-db_cv_update(struct sqlbox *p, size_t dbid, char *content)
+db_page_update(struct sqlbox *p, size_t dbid, char *page, char *content)
 	{
 	time_t mtime = time(NULL);
 
@@ -678,10 +683,11 @@ db_cv_update(struct sqlbox *p, size_t dbid, char *content)
 		{
 		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
 		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		{ .sparm = page, .type = SQLBOX_PARM_STRING },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_CV_UPDATE, 2, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_PAGE_UPDATE, 3, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -1368,7 +1374,7 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_cv_get(p, dbid);
+	struct post *post = db_page_get(p, dbid, "cv");
 	if (post == NULL)
 		{
 		open_response(r, KHTTP_500);
@@ -1414,7 +1420,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 			return;
 			}
 
-		db_cv_update(p, dbid, content->val);
+		db_page_update(p, dbid, "cv", content->val);
 
 		open_head(r, KHTTP_302);
 		khttp_head(r, kresps[KRESP_LOCATION], "/cv");
@@ -1422,7 +1428,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 	else if (r->method == KMETHOD_GET)
 		{
-		struct post *post = db_cv_get(p, dbid);
+		struct post *post = db_page_get(p, dbid, "cv");
 		if (post == NULL)
 			{
 			open_response(r, KHTTP_200);

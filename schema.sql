@@ -12,12 +12,11 @@ CREATE TABLE sessions
 	, FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 
--- Should only have one row
-CREATE TABLE cv
+CREATE TABLE pages
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
+	, title TEXT NOT NULL UNIQUE
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
 	, content TEXT NOT NULL
-	, lock INTEGER NOT NULL UNIQUE DEFAULT(0) -- DO NOT SET THIS VALUE. Enforces single rowness
 	);
 
 CREATE TABLE posts
