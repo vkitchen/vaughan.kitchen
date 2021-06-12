@@ -453,7 +453,7 @@ template(size_t key, void *arg)
 			khtml_puts(data->req, data->title);
 			break;
 		case (KEY_NEXT_PAGE_LINK):
-			if ((data->page_no + 1) * 10 > data->cocktails->length)
+			if ((data->page_no + 1) * 10 >= data->cocktails->length)
 				break;
 			if (data->query != NULL)
 				snprintf(buf, sizeof(buf), "?q=%s&page=%zd", data->query, data->page_no + 1);
