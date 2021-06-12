@@ -12,8 +12,7 @@
 #include <kcgi.h>
 #include <kcgihtml.h>
 
-#include "db.h"
-#include "templates.h"
+#include "shared.h"
 #include "cocktails.h"
 
 struct ingredient
@@ -473,6 +472,8 @@ template(size_t key, void *arg)
 			// for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
 			for (size_t i = 0; i < data->cocktails->length; i++)
 				{
+				if (data->cocktails->store[i] == NULL)
+					continue;
 				d.cocktail = data->cocktails->store[i];
 				khttp_template_buf(data->r, &t, tmpl_drink_snippet_data, tmpl_drink_snippet_size);
 				}
@@ -547,15 +548,62 @@ handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
 	}
 
 void
+handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	struct kpair *query;
+
+	if ((query = r->fieldmap[PARAM_QUERY]) == NULL)
+		{
+		open_response(r, KHTTP_400);
+		khttp_puts(r, "400 Bad Request");
+		return;
+		}
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.title = "Search Results";
+	data.cocktails = db_cocktail_list(p, dbid);
+
+	for (size_t i = 0; i < data.cocktails->length; i++)
+		{
+		int found = 0;
+		if (strcasestr(data.cocktails->store[i]->title, query->val) != NULL)
+			found = 1;
+
+		if (!found)
+			for (size_t j = 0; j < data.cocktails->store[i]->ingredients->length; j++)
+				if (strcasestr(data.cocktails->store[i]->ingredients->store[j]->name, query->val) != NULL)
+					{
+					found = 1;
+					break;
+					}
+
+		if (!found)
+			data.cocktails->store[i] = NULL;
+		}
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_drinks_list_data, tmpl_drinks_list_size);
+	}
+
+void
 handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
 
+	// TODO prefix instead of strstr
 	char *drink;
 	if ((drink = strstr(r->path, "drinks/")) != NULL)
 		return handle_cocktail(r, p, dbid, &r->path[strlen("drinks/")]);
+
+	if (strstr(r->path, "search") != NULL)
+		return handle_search(r, p, dbid);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.title = "All Drinks";

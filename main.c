@@ -16,8 +16,7 @@
 #include <kcgi.h>
 #include <kcgihtml.h>
 
-#include "db.h"
-#include "templates.h"
+#include "shared.h"
 #include "cocktails.h"
 
 // TODO use fastcgi
@@ -104,30 +103,6 @@ struct tmpl_data
 	struct post           *post;
 	struct post_array     *posts;
 	int                    raw; /* don't render markdown */
-	};
-
-enum param
-	{
-	PARAM_USERNAME,
-	PARAM_PASSWORD,
-	PARAM_SESSCOOKIE,
-	PARAM_TITLE,
-	PARAM_SLUG,
-	PARAM_SNIPPET,
-	PARAM_CONTENT,
-	PARAM__MAX,
-	};
-
-const struct kvalid params[PARAM__MAX] =
-	{
-	{ kvalid_stringne, "username" },
-	{ kvalid_stringne, "password" },
-	{ kvalid_uint, "s" },
-	/* post */
-	{ kvalid_stringne, "title" },
-	{ kvalid_stringne, "slug" },
-	{ kvalid_stringne, "snippet" },
-	{ kvalid_stringne, "content" },
 	};
 
 enum key
