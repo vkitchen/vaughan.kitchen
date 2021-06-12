@@ -21,6 +21,8 @@
 
 /* A_data, A_end, A_size */
 INCBIN(tmpl_blog, "tmpl/blog.html");
+INCBIN(tmpl_connect4, "tmpl/connect4.html");
+INCBIN(tmpl_chinese_chess, "tmpl/chinese-chess.html");
 INCBIN(tmpl_cv, "tmpl/cv.html");
 INCBIN(tmpl_drink, "tmpl/drink.html");
 INCBIN(tmpl_drink_snippet, "tmpl/drink_snippet.html");
@@ -28,6 +30,7 @@ INCBIN(tmpl_drinks_list, "tmpl/drinks_list.html");
 INCBIN(tmpl_editcv, "tmpl/editcv.html");
 INCBIN(tmpl_editpost, "tmpl/editpost.html");
 INCBIN(tmpl_editrecipe, "tmpl/editrecipe.html");
+INCBIN(tmpl_games, "tmpl/games.html");
 INCBIN(tmpl_index, "tmpl/index.html");
 INCBIN(tmpl_login, "tmpl/login.html");
 INCBIN(tmpl_newpost, "tmpl/newpost.html");
@@ -118,6 +121,9 @@ enum page
 	PAGE_NEW_RECIPE,
 	PAGE_EDIT_RECIPE,
 	PAGE_GAMES,
+	PAGE_ROOMS,
+	PAGE_CONNECT4,
+	PAGE_CHINESE_CHESS,
 	PAGE_LOGIN,
 	PAGE_LOGOUT,
 	PAGE__MAX
@@ -138,6 +144,9 @@ const char *const pages[PAGE__MAX] =
 	"newrecipe",
 	"editrecipe",
 	"games",
+	"rooms",
+	"connect4",
+	"chinese-chess",
 	"login",
 	"logout",
 	};
@@ -346,6 +355,16 @@ size_t file_slurp(char const *filename, char **into)
 		}
 
 	return file_length;
+	}
+
+// TODO error detection
+size_t file_spurt(char const *filename, char *buffer, size_t bytes)
+	{
+	FILE *fh;
+	fh = fopen(filename, "wb");
+	fwrite(buffer, 1, bytes, fh);
+	fclose(fh);
+	return bytes;
 	}
 
 // TODO merge this into pointer array?
@@ -1386,7 +1405,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	// Not logged in
 	if (user == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1414,7 +1433,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		struct post *post = db_page_get(p, dbid, "cv");
 		if (post == NULL)
 			{
-			open_response(r, KHTTP_200);
+			open_response(r, KHTTP_404);
 			khttp_puts(r, "404 Not Found");
 			return;
 			}
@@ -1463,7 +1482,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
 	if (post == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1488,7 +1507,7 @@ handle_new_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user
 	// Not logged in
 	if (user == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1541,7 +1560,7 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 	// Not logged in
 	if (user == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1571,7 +1590,7 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 		struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
 		if (post == NULL)
 			{
-			open_response(r, KHTTP_200);
+			open_response(r, KHTTP_404);
 			khttp_puts(r, "404 Not Found");
 			return;
 			}
@@ -1672,7 +1691,7 @@ handle_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *us
 	// Not logged in
 	if (user == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1725,7 +1744,7 @@ handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *u
 	// Not logged in
 	if (user == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1755,7 +1774,7 @@ handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *u
 		struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
 		if (post == NULL)
 			{
-			open_response(r, KHTTP_200);
+			open_response(r, KHTTP_404);
 			khttp_puts(r, "404 Not Found");
 			return;
 			}
@@ -1787,7 +1806,7 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
 	if (post == NULL)
 		{
-		open_response(r, KHTTP_200);
+		open_response(r, KHTTP_404);
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
@@ -1805,8 +1824,71 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 static void
 handle_games(struct kreq *r)
 	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_GAMES;
+
 	open_response(r, KHTTP_200);
-	khttp_puts(r, "Not implemented yet");
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_games_data, tmpl_games_size);
+	}
+
+static void
+handle_rooms(struct kreq *r)
+	{
+	char buf[2048];
+	snprintf(buf, sizeof(buf), "rooms/%s", r->path);
+
+	// TODO check request size (httpd already does some of that for us)
+	if (r->fields != NULL)
+		file_spurt(buf, r->fields->val, r->fields->valsz);
+
+	char *data;
+	size_t file_length = 0;
+	file_length = file_slurp(buf, &data);
+
+	if (file_length == 0)
+		{
+		open_response(r, KHTTP_404);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+	open_response(r, KHTTP_200);
+	khttp_write(r, data, file_length);
+	}
+
+static void
+handle_connect4(struct kreq *r)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_CONNECT4;
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_connect4_data, tmpl_connect4_size);
+	}
+
+static void
+handle_chinese_chess(struct kreq *r)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_CHINESE_CHESS;
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_chinese_chess_data, tmpl_chinese_chess_size);
 	}
 
 static void
@@ -1963,6 +2045,15 @@ main(void)
 			break;
 		case (PAGE_GAMES):
 			handle_games(&r);
+			break;
+		case (PAGE_ROOMS):
+			handle_rooms(&r);
+			break;
+		case (PAGE_CONNECT4):
+			handle_connect4(&r);
+			break;
+		case (PAGE_CHINESE_CHESS):
+			handle_chinese_chess(&r);
 			break;
 		case (PAGE_LOGIN):
 			handle_login(&r, p, dbid, u);
