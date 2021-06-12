@@ -30,6 +30,7 @@ const struct kvalid params[PARAM__MAX] =
 	{ kvalid_stringne, "password" },
 	{ kvalid_uint, "s" },
 	{ kvalid_stringne, "q" },
+	{ kvalid_uint, "page" },
 	/* post */
 	{ kvalid_stringne, "title" },
 	{ kvalid_stringne, "slug" },

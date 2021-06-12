@@ -60,7 +60,7 @@ struct tmpl_data
 	struct user           *user;
 	struct cocktail_array *cocktails;
 	int                    raw; /* don't render markdown */
-	int                    page_no; /* pagination */
+	size_t                 page_no; /* pagination */
 	};
 
 struct drink_tmpl_data
@@ -444,6 +444,7 @@ drink_template(size_t key, void *arg)
 static int
 template(size_t key, void *arg)
 	{
+	char buf[2048];
 	struct tmpl_data *data = arg;
 
 	switch (key)
@@ -452,6 +453,10 @@ template(size_t key, void *arg)
 			khtml_puts(data->req, data->title);
 			break;
 		case (KEY_NEXT_PAGE_LINK):
+			snprintf(buf, sizeof(buf), "?page=%zd", data->page_no + 1);
+			khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+			khtml_puts(data->req, "Next Page");
+			khtml_closeelem(data->req, 1);
 			break;
 		case (KEY_DRINKS):
 			{
@@ -470,12 +475,18 @@ template(size_t key, void *arg)
 
 			// TODO remimplement pagination
 			// for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
+			size_t rendered = 0;
 			for (size_t i = 0; i < data->cocktails->length; i++)
 				{
 				if (data->cocktails->store[i] == NULL)
 					continue;
+				if (i < data->page_no * 10)
+					continue;
 				d.cocktail = data->cocktails->store[i];
 				khttp_template_buf(data->r, &t, tmpl_drink_snippet_data, tmpl_drink_snippet_size);
+				rendered++;
+				if (rendered == 10)
+					break;
 				}
 			}
 			break;
@@ -608,6 +619,10 @@ handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.title = "All Drinks";
 	data.cocktails = db_cocktail_list(p, dbid);
+
+	struct kpair *page;
+	if ((page = r->fieldmap[PARAM_PAGE]) != NULL)
+		data.page_no = page->parsed.i;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
