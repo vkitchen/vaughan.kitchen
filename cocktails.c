@@ -57,9 +57,9 @@ struct tmpl_data
 	struct kreq           *r;
 	struct khtmlreq       *req;
 	char                  *title;
+	char                  *query;
 	struct user           *user;
 	struct cocktail_array *cocktails;
-	int                    raw; /* don't render markdown */
 	size_t                 page_no; /* pagination */
 	};
 
@@ -453,7 +453,12 @@ template(size_t key, void *arg)
 			khtml_puts(data->req, data->title);
 			break;
 		case (KEY_NEXT_PAGE_LINK):
-			snprintf(buf, sizeof(buf), "?page=%zd", data->page_no + 1);
+			if ((data->page_no + 1) * 10 > data->cocktails->length)
+				break;
+			if (data->query != NULL)
+				snprintf(buf, sizeof(buf), "?q=%s&page=%zd", data->query, data->page_no + 1);
+			else
+				snprintf(buf, sizeof(buf), "?page=%zd", data->page_no + 1);
 			khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 			khtml_puts(data->req, "Next Page");
 			khtml_closeelem(data->req, 1);
@@ -473,13 +478,9 @@ template(size_t key, void *arg)
 			t.cb = drink_template;
 			t.arg = &d;
 
-			// TODO remimplement pagination
-			// for (size_t i = 0 + data->page * 10; i < data->page * 10 + 10 && i < 1024 && data->cocktails->store[i] != NULL; i++)
 			size_t rendered = 0;
 			for (size_t i = 0; i < data->cocktails->length; i++)
 				{
-				if (data->cocktails->store[i] == NULL)
-					continue;
 				if (i < data->page_no * 10)
 					continue;
 				d.cocktail = data->cocktails->store[i];
@@ -574,26 +575,35 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 		return;
 		}
 
+	struct cocktail_array *cocktails = db_cocktail_list(p, dbid);
+
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.title = "Search Results";
-	data.cocktails = db_cocktail_list(p, dbid);
+	data.query = query->val;
+	data.cocktails = cocktails;
 
-	for (size_t i = 0; i < data.cocktails->length; i++)
+	struct kpair *page;
+	if ((page = r->fieldmap[PARAM_PAGE]) != NULL)
+		data.page_no = page->parsed.i;
+
+	size_t length = cocktails->length;
+	cocktails->length = 0; /* "blank" array */
+	for (size_t i = 0; i < length; i++)
 		{
 		int found = 0;
-		if (strcasestr(data.cocktails->store[i]->title, query->val) != NULL)
+		if (strcasestr(cocktails->store[i]->title, query->val) != NULL)
 			found = 1;
 
 		if (!found)
-			for (size_t j = 0; j < data.cocktails->store[i]->ingredients->length; j++)
-				if (strcasestr(data.cocktails->store[i]->ingredients->store[j]->name, query->val) != NULL)
+			for (size_t j = 0; j < cocktails->store[i]->ingredients->length; j++)
+				if (strcasestr(cocktails->store[i]->ingredients->store[j]->name, query->val) != NULL)
 					{
 					found = 1;
 					break;
 					}
 
-		if (!found)
-			data.cocktails->store[i] = NULL;
+		if (found)
+			cocktail_array_append(cocktails, cocktails->store[i]);
 		}
 
 	open_response(r, KHTTP_200);
