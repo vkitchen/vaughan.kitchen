@@ -2,6 +2,18 @@ CFLAGS = -Wall -Wextra -O2 -g `pkg-config --cflags kcgi-html sqlbox lowdown`
 
 LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox lowdown`
 
+HEADERS = \
+	cocktails.h \
+	db.h \
+	templates.h
+
+SRC = \
+	cocktails.c \
+	db.c \
+	templates.c
+
+OBJECTS = $(SRC:.c=.o)
+
 .SUFFIXES: .c .o
 
 .c.o: $(HEADERS)
@@ -9,11 +21,8 @@ LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox lowdown`
 
 all: main
 
-# main: main.o $(OBJECTS) $(HEADERS)
-#	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
-
-main: main.o
-	$(CC) -o $@ main.o $(LDFLAGS)
+main: main.o $(OBJECTS) $(HEADERS)
+	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
 
 clean:
 	rm -f main main.o $(OBJECTS)
