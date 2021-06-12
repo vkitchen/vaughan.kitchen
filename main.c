@@ -15,6 +15,26 @@
 #include <sqlbox.h>
 #include <kcgi.h>
 #include <kcgihtml.h>
+#define INCBIN_PREFIX
+#define INCBIN_STYLE INCBIN_STYLE_SNAKE
+#include "external/incbin/incbin.h"
+
+/* A_data, A_end, A_size */
+INCBIN(tmpl_blog, "tmpl/blog.html");
+INCBIN(tmpl_cv, "tmpl/cv.html");
+INCBIN(tmpl_drink, "tmpl/drink.html");
+INCBIN(tmpl_drink_snippet, "tmpl/drink_snippet.html");
+INCBIN(tmpl_drinks_list, "tmpl/drinks_list.html");
+INCBIN(tmpl_editcv, "tmpl/editcv.html");
+INCBIN(tmpl_editpost, "tmpl/editpost.html");
+INCBIN(tmpl_editrecipe, "tmpl/editrecipe.html");
+INCBIN(tmpl_index, "tmpl/index.html");
+INCBIN(tmpl_login, "tmpl/login.html");
+INCBIN(tmpl_newpost, "tmpl/newpost.html");
+INCBIN(tmpl_newrecipe, "tmpl/newrecipe.html");
+INCBIN(tmpl_post, "tmpl/post.html");
+INCBIN(tmpl_recipe, "tmpl/recipe.html");
+INCBIN(tmpl_recipes, "tmpl/recipes.html");
 
 // TODO use fastcgi
 // TODO read all templates upon startup and then sandbox more heavily
@@ -1269,8 +1289,7 @@ template(size_t key, void *arg)
 			for (size_t i = 0; i < data->cocktails->length; i++)
 				{
 				d.cocktail = data->cocktails->store[i];
-				// TODO probably rereading a few hundred times is a bad idea
-				khttp_template(data->r, &t, "tmpl/drink_snippet.html");
+				khttp_template_buf(data->r, &t, tmpl_drink_snippet_data, tmpl_drink_snippet_size);
 				}
 			}
 			break;
@@ -1328,7 +1347,7 @@ handle_index(struct kreq *r, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/index.html");
+	khttp_template_buf(r, &t, tmpl_index_data, tmpl_index_size);
 	}
 
 static void
@@ -1354,7 +1373,7 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/cv.html");
+	khttp_template_buf(r, &t, tmpl_cv_data, tmpl_cv_size);
 	}
 
 static void
@@ -1408,7 +1427,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 		open_response(r, KHTTP_200);
 		open_template(&data, &t, &hr, r);
-		khttp_template(r, &t, "tmpl/editcv.html");
+		khttp_template_buf(r, &t, tmpl_editcv_data, tmpl_editcv_size);
 		}
 	else
 		{
@@ -1431,7 +1450,7 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/blog.html");
+	khttp_template_buf(r, &t, tmpl_blog_data, tmpl_blog_size);
 	}
 
 static void
@@ -1456,7 +1475,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/post.html");
+	khttp_template_buf(r, &t, tmpl_post_data, tmpl_post_size);
 	}
 
 static void
@@ -1503,7 +1522,7 @@ handle_new_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user
 
 		open_response(r, KHTTP_200);
 		open_template(&data, &t, &hr, r);
-		khttp_template(r, &t, "tmpl/newpost.html");
+		khttp_template_buf(r, &t, tmpl_newpost_data, tmpl_newpost_size);
 		}
 	else
 		{
@@ -1565,7 +1584,7 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 
 		open_response(r, KHTTP_200);
 		open_template(&data, &t, &hr, r);
-		khttp_template(r, &t, "tmpl/editpost.html");
+		khttp_template_buf(r, &t, tmpl_editpost_data, tmpl_editpost_size);
 		}
 	else
 		{
@@ -1597,7 +1616,7 @@ handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
 	t.cb = drink_template;
 
 	open_response(r, KHTTP_200);
-	khttp_template(r, &t, "tmpl/drink.html");
+	khttp_template_buf(r, &t, tmpl_drink_data, tmpl_drink_size);
 	}
 
 static void
@@ -1623,7 +1642,7 @@ handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/drinks_list.html");
+	khttp_template_buf(r, &t, tmpl_drinks_list_data, tmpl_drinks_list_size);
 	}
 
 static void
@@ -1640,7 +1659,7 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/recipes.html");
+	khttp_template_buf(r, &t, tmpl_recipes_data, tmpl_recipes_size);
 	}
 
 static void
@@ -1687,7 +1706,7 @@ handle_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *us
 
 		open_response(r, KHTTP_200);
 		open_template(&data, &t, &hr, r);
-		khttp_template(r, &t, "tmpl/newrecipe.html");
+		khttp_template_buf(r, &t, tmpl_newrecipe_data, tmpl_newrecipe_size);
 		}
 	else
 		{
@@ -1749,7 +1768,7 @@ handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *u
 
 		open_response(r, KHTTP_200);
 		open_template(&data, &t, &hr, r);
-		khttp_template(r, &t, "tmpl/editrecipe.html");
+		khttp_template_buf(r, &t, tmpl_editrecipe_data, tmpl_editrecipe_size);
 		}
 	else
 		{
@@ -1780,7 +1799,7 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
-	khttp_template(r, &t, "tmpl/recipe.html");
+	khttp_template_buf(r, &t, tmpl_recipe_data, tmpl_recipe_size);
 	}
 
 static void
@@ -1837,7 +1856,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		else
 			{
 			open_template(&data, &t, &hr, r);
-			khttp_template(r, &t, "tmpl/login.html");
+			khttp_template_buf(r, &t, tmpl_login_data, tmpl_login_size);
 			}
 		}
 	else
