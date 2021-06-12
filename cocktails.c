@@ -350,6 +350,41 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 	return cocktails;
 	}
 
+void
+render_ingredient(char *buf, size_t bufsize, char *name, char *measure, char *unit)
+	{
+	if (strcmp(measure, "0") == 0 && strcmp(unit, "splash") == 0)
+		snprintf(buf, bufsize, "%s", name);
+	else if (strcmp(measure, "1") == 0 && strcmp(unit, "splash") == 0)
+		snprintf(buf, bufsize, "A splash of %s", name);
+	else if (strcmp(unit, "splash") == 0)
+		snprintf(buf, bufsize, "%s splashes %s", measure, name);
+	else if (strcmp(measure, "0") == 0 && strcmp(unit, "dash") == 0)
+		snprintf(buf, bufsize, "%s", name);
+	else if (strcmp(measure, "1") == 0 && strcmp(unit, "dash") == 0)
+		snprintf(buf, bufsize, "A dash of %s", name);
+	else if (strcmp(unit, "dash") == 0)
+		snprintf(buf, bufsize, "%s dashes %s", measure, name);
+	else if (strcmp(measure, "0") == 0 && strcmp(unit, "drop") == 0)
+		snprintf(buf, bufsize, "%s", name);
+	else if (strcmp(measure, "1") == 0 && strcmp(unit, "drop") == 0)
+		snprintf(buf, bufsize, "A drop of %s", name);
+	else if (strcmp(unit, "drop") == 0)
+		snprintf(buf, bufsize, "%s drops %s", measure, name);
+	else if (strcmp(unit, "top") == 0)
+		snprintf(buf, bufsize, "Top with %s", name);
+	else if (strcmp(measure, "1") == 0 && strcmp(unit, "taste") == 0)
+		snprintf(buf, bufsize, "%s to taste", name);
+	else if (strcmp(measure, "0") == 0 && strcmp(unit, "none") == 0)
+		snprintf(buf, bufsize, "%s", name);
+	else if (strcmp(measure, "1") == 0 && strcmp(unit, "none") == 0)
+		snprintf(buf, bufsize, "A %s", name);
+	else if (strcmp(unit, "none") == 0)
+		snprintf(buf, bufsize, "%s %s", measure, name);
+	else
+		snprintf(buf, bufsize, "%s %s %s", measure, unit, name);
+	}
+
 static int
 drink_template(size_t key, void *arg)
 	{
@@ -390,11 +425,9 @@ drink_template(size_t key, void *arg)
 			for (size_t i = 0; i < data->cocktail->ingredients->length; i++)
 				{
 				khtml_elem(data->req, KELEM_LI);
-				khtml_puts(data->req, data->cocktail->ingredients->store[i]->name);
-				khtml_puts(data->req, " ");
-				khtml_puts(data->req, data->cocktail->ingredients->store[i]->measure);
-				khtml_puts(data->req, " ");
-				khtml_puts(data->req, data->cocktail->ingredients->store[i]->unit);
+				struct ingredient *ingredient = data->cocktail->ingredients->store[i];
+				render_ingredient(buf, sizeof(buf), ingredient->name, ingredient->measure, ingredient->unit);
+				khtml_puts(data->req, buf);
 				khtml_closeelem(data->req, 1);
 				}
 			break;
