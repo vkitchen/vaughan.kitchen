@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "shared.h"
 
 #define INCBIN_PREFIX
@@ -5,6 +7,8 @@
 #include "external/incbin/incbin.h"
 
 /* A_data, A_end, A_size */
+INCBIN(tmpl_images, "tmpl/images.html");
+INCBIN(tmpl_newimage, "tmpl/newimage.html");
 INCBIN(tmpl_blog, "tmpl/blog.html");
 INCBIN(tmpl_connect4, "tmpl/connect4.html");
 INCBIN(tmpl_chinese_chess, "tmpl/chinese-chess.html");
@@ -28,14 +32,16 @@ const struct kvalid params[PARAM__MAX] =
 	{
 	{ kvalid_stringne, "username" },
 	{ kvalid_stringne, "password" },
-	{ kvalid_uint, "s" },
-	{ kvalid_stringne, "q" },
+	{ kvalid_uint, "s" }, /* session */
+	{ kvalid_stringne, "q" }, /* query (search) */
 	{ kvalid_uint, "page" },
-	/* post */
 	{ kvalid_stringne, "title" },
+	{ kvalid_stringne, "alt" },
+	{ kvalid_stringne, "attribution" },
 	{ kvalid_stringne, "slug" },
-	{ kvalid_stringne, "snippet" },
+	{ kvalid_string, "snippet" },
 	{ kvalid_stringne, "content" },
+	{ NULL, "image" }, /* TODO is this right? What about NULL bytes */
 	};
 
 struct sqlbox_pstmt pstmts[STMT__MAX] =
@@ -48,6 +54,10 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"INSERT INTO sessions (cookie,user_id) VALUES (?,?)" },
 	/* STMT_SESS_DEL */
 	{ .stmt = (char *)"DELETE FROM sessions WHERE cookie=?" },
+	/* STMT_IMAGE_NEW */
+	{ .stmt = (char *)"INSERT INTO images (title,alt,attribution,hash,format) VALUES (?,?,?,?,?)" },
+	/* STMT_IMAGE_LIST */
+	{ .stmt = (char *)"SELECT id,title,alt,attribution,ctime,hash,format FROM images ORDER BY id ASC" },
 	/* STMT_PAGE_GET */
 	{ .stmt = (char *)"SELECT mtime,content FROM pages WHERE title=?" },
 	/* STMT_PAGE_UPDATE */

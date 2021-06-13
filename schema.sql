@@ -12,6 +12,16 @@ CREATE TABLE sessions
 	, FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 
+CREATE TABLE images
+	( id INTEGER PRIMARY KEY AUTOINCREMENT
+	, title TEXT NOT NULL
+	, alt TEXT
+	, attribution TEXT
+	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
+	, hash TEXT NOT NULL UNIQUE -- md5
+	, format TEXT NOT NULL -- 'jpg', 'png', 'gif'
+	);
+
 CREATE TABLE pages
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL UNIQUE
@@ -28,7 +38,9 @@ CREATE TABLE posts
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
 	, content TEXT NOT NULL
 	, user_id INTEGER NOT NULL -- author
+	, image_id INTEGER
 	, FOREIGN KEY(user_id) REFERENCES users(id)
+	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);
 
 -- Same format as a post (at least for now)
@@ -41,7 +53,9 @@ CREATE TABLE recipes
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
 	, content TEXT NOT NULL
 	, user_id INTEGER NOT NULL -- author
+	, image_id INTEGER
 	, FOREIGN KEY(user_id) REFERENCES users(id)
+	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);
 
 CREATE TABLE cocktails

@@ -11,6 +11,8 @@
 #include "external/incbin/incbin.h"
 
 /* A_data, A_end, A_size */
+INCBIN_EXTERN(tmpl_images);
+INCBIN_EXTERN(tmpl_newimage);
 INCBIN_EXTERN(tmpl_blog);
 INCBIN_EXTERN(tmpl_connect4);
 INCBIN_EXTERN(tmpl_chinese_chess);
@@ -38,9 +40,12 @@ enum param
 	PARAM_QUERY,
 	PARAM_PAGE,
 	PARAM_TITLE,
+	PARAM_ALT,
+	PARAM_ATTRIBUTION,
 	PARAM_SLUG,
 	PARAM_SNIPPET,
 	PARAM_CONTENT,
+	PARAM_IMAGE,
 	PARAM__MAX,
 	};
 
@@ -52,6 +57,8 @@ enum stmt
 	STMT_SESS_GET,
 	STMT_SESS_NEW,
 	STMT_SESS_DEL,
+	STMT_IMAGE_NEW,
+	STMT_IMAGE_LIST,
 	STMT_PAGE_GET,
 	STMT_PAGE_UPDATE,
 	STMT_POST_GET,

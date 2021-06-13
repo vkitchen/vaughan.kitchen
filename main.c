@@ -11,6 +11,9 @@
 #include <inttypes.h> /* PRId64 */
 #include <time.h> /* time */
 #include <sys/queue.h> /* dep of lowdown */
+#include <netinet/in.h> /* dep of resolv.h */
+#include <resolv.h> /* b64_ntop */
+#include <md5.h>
 #include <lowdown.h>
 #include <sqlbox.h>
 #include <kcgi.h>
@@ -29,6 +32,24 @@ struct user
 	int64_t    id;
 	char      *username; /* user's login */
 	char      *name;     /* user's display name */
+	};
+
+struct image
+	{
+	int64_t    id;
+	char      *title;
+	char      *alt;
+	char      *attribution;
+	time_t     ctime;
+	char      *hash;
+	char      *format;
+	};
+
+struct image_array
+	{
+	size_t capacity;
+	size_t length;
+	struct image **store;
 	};
 
 struct post
@@ -52,6 +73,8 @@ struct post_array
 enum page
 	{
 	PAGE_INDEX,
+	PAGE_IMAGES,
+	PAGE_NEW_IMAGE,
 	PAGE_CV,
 	PAGE_EDIT_CV,
 	PAGE_BLOG,
@@ -75,6 +98,8 @@ enum page
 const char *const pages[PAGE__MAX] =
 	{
 	"index",
+	"images",
+	"newimage",
 	"cv",
 	"editcv",
 	"blag",
@@ -102,12 +127,16 @@ struct tmpl_data
 	struct user           *user;
 	struct post           *post;
 	struct post_array     *posts;
+	struct image_array    *images;
 	int                    raw; /* don't render markdown */
 	};
 
 enum key
 	{
 	KEY_LOGIN_LOGOUT_LINK,
+	KEY_IMAGES_LINK,
+	KEY_NEW_IMAGE_LINK,
+	KEY_IMAGES,
 	KEY_EDIT_CV_LINK,
 	KEY_NEW_POST_LINK,
 	KEY_EDIT_POST_LINK,
@@ -126,6 +155,9 @@ enum key
 static const char *keys[KEY__MAX] =
 	{
 	"login-logout-link",
+	"images-link",
+	"new-image-link",
+	"images",
 	/* post */
 	"edit-cv-link",
 	"new-post-link",
@@ -180,6 +212,28 @@ size_t file_spurt(char const *filename, char *buffer, size_t bytes)
 	fwrite(buffer, 1, bytes, fh);
 	fclose(fh);
 	return bytes;
+	}
+
+struct image_array *
+image_array_new()
+	{
+	struct image_array *a = kmalloc(sizeof(struct image_array));
+	a->capacity = 256;
+	a->length = 0;
+	a->store = kmalloc(a->capacity * sizeof(struct image *));
+	return a;
+	}
+
+void
+image_array_append(struct image_array *a, struct image *image)
+	{
+	if (a->length == a->capacity)
+		{
+		a->capacity *= 2;
+		a->store = krealloc(a->store, a->capacity * sizeof(struct image *));
+		}
+	a->store[a->length] = image;
+	a->length++;
 	}
 
 void
@@ -431,6 +485,103 @@ db_sess_del(struct sqlbox *p, size_t dbid, int64_t cookie)
 		errx(EXIT_FAILURE, "sqlbox_finalise");
 	}
 
+void
+db_image_new(struct sqlbox *p, size_t dbid, char *title, char *alt, char *attribution, char *hash, char *format)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .sparm = alt, .type = SQLBOX_PARM_STRING },
+		{ .sparm = attribution, .type = SQLBOX_PARM_STRING },
+		{ .sparm = hash, .type = SQLBOX_PARM_STRING },
+		{ .sparm = format, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_NEW, 5, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
+struct image_array *
+db_image_list(struct sqlbox *p, size_t dbid)
+	{
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_LIST, 0, NULL, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	struct image_array *images = image_array_new();
+
+	const struct sqlbox_parmset *res;
+	for (;;)
+		{
+		if ((res = sqlbox_step(p, stmtid)) == NULL)
+			errx(EXIT_FAILURE, "sqlbox_step");
+
+		if (res->code != SQLBOX_CODE_OK)
+			errx(EXIT_FAILURE, "res.code");
+
+		// no results or done
+		if (res->psz == 0)
+			break;
+
+		struct image *image = kmalloc(sizeof(struct image));
+		memset(image, 0, sizeof(struct image));
+
+		// id
+		if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
+			image->id = res->ps[0].iparm;
+
+		// title
+		if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
+			image->title = kstrdup(res->ps[1].sparm);
+
+		// alt
+		if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
+			image->alt = kstrdup(res->ps[2].sparm);
+
+		// attribution
+		if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
+			image->attribution = kstrdup(res->ps[3].sparm);
+
+		// ctime
+		if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
+			image->ctime = res->ps[4].iparm;
+
+		// hash
+		if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_STRING)
+			image->hash = kstrdup(res->ps[5].sparm);
+
+		// format
+		if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
+			image->format = kstrdup(res->ps[6].sparm);
+
+		image_array_append(images, image);
+		}
+
+	// no results
+	if (images->length == 0)
+		{
+		// TODO free
+		images = NULL;
+		}
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return images;
+	}
+
 struct post *
 db_page_get(struct sqlbox *p, size_t dbid, char *page)
 	{
@@ -661,14 +812,46 @@ template(size_t key, void *arg)
 		case (KEY_LOGIN_LOGOUT_LINK):
 			if (data->user == NULL)
 				{
-				khtml_attr(data->req, KELEM_A, KATTR_HREF, "login", KATTR__MAX);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/login", KATTR__MAX);
 				khtml_puts(data->req, "Login");
 				khtml_closeelem(data->req, 1);
 				}
 			else
 				{
-				khtml_attr(data->req, KELEM_A, KATTR_HREF, "logout", KATTR__MAX);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/logout", KATTR__MAX);
 				khtml_puts(data->req, "Logout");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_IMAGES_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_LI);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/images", KATTR__MAX);
+				khtml_puts(data->req, "Images");
+				khtml_closeelem(data->req, 2);
+				}
+			break;
+		case (KEY_NEW_IMAGE_LINK):
+			if (data->user != NULL)
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/newimage", KATTR__MAX);
+				khtml_puts(data->req, "New Image");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_IMAGES):
+			if (data->user != NULL && data->images != NULL)
+				{
+				khtml_elem(data->req, KELEM_UL);
+				for (size_t i = 0; i < data->images->length; i++)
+					{
+					khtml_elem(data->req, KELEM_LI);
+					snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->images->store[i]->hash);
+					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+					khtml_puts(data->req, data->images->store[i]->hash);
+					khtml_closeelem(data->req, 2);
+					}
 				khtml_closeelem(data->req, 1);
 				}
 			break;
@@ -858,6 +1041,112 @@ handle_index(struct kreq *r, struct user *user)
 	}
 
 static void
+handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_404);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_IMAGES;
+	data.user = user;
+	data.images = db_image_list(p, dbid);
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_images_data, tmpl_images_size);
+	}
+
+static void
+handle_new_image(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	char buf[2048];
+	MD5_CTX md5;
+	char hash[MD5_DIGEST_STRING_LENGTH + 1];
+	u_char digest[MD5_DIGEST_STRING_LENGTH + 1];
+
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	// Not logged in
+	if (user == NULL)
+		{
+		open_response(r, KHTTP_404);
+		khttp_puts(r, "404 Not Found");
+		return;
+		}
+
+	if (r->method == KMETHOD_POST)
+		{
+		struct kpair *title, *alt, *attribution, *image;
+
+		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+		    (alt = r->fieldmap[PARAM_ALT]) == NULL ||
+		    (attribution = r->fieldmap[PARAM_ATTRIBUTION]) == NULL ||
+		    (image = r->fieldmap[PARAM_IMAGE]) == NULL)
+			{
+			open_response(r, KHTTP_400);
+			khttp_puts(r, "400 Bad Request");
+			return;
+			}
+
+		// TODO md5 image. Save image. Save md5 in DB
+		// TODO check jpg is valid
+		// TODO remove EXIF
+
+		MD5Init(&md5);
+		MD5Update(&md5, image->val, image->valsz);
+		MD5Final(digest, &md5);
+		if (b64_ntop(digest, MD5_DIGEST_LENGTH, hash, sizeof(hash)) == -1)
+			errx(1, "error encoding base64");
+
+		// TODO this seems a bit naughty
+		size_t len = strlen(hash);
+		if (hash[len-1] == '=')
+			hash[len-1] = '\0';
+		if (hash[len-2] == '=')
+			hash[len-2] = '\0';
+
+		db_image_new(p, dbid, title->val, alt->val, attribution->val, hash, "jpg");
+
+		// now actually write the image
+		// TODO check request size (httpd already does some of that for us)
+		snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
+		file_spurt(buf, image->val, image->valsz);
+
+		// open_head(r, KHTTP_302);
+		// khttp_head(r, kresps[KRESP_LOCATION], "/images");
+		// khttp_body(r);
+		open_response(r, KHTTP_200);
+		khttp_printf(r, "Size: %zd", image->valsz);
+		}
+	else if (r->method == KMETHOD_GET)
+		{
+		memset(&data, 0, sizeof(struct tmpl_data));
+		data.page = PAGE_NEW_IMAGE;
+		data.user = user;
+
+		open_response(r, KHTTP_200);
+		open_template(&data, &t, &hr, r);
+		khttp_template_buf(r, &t, tmpl_newimage_data, tmpl_newimage_size);
+		}
+	else
+		{
+		open_head(r, KHTTP_405);
+		khttp_puts(r, "405 Method Not Allowed");
+		}
+	}
+
+static void
 handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
@@ -897,7 +1186,6 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		khttp_puts(r, "404 Not Found");
 		return;
 		}
-
 
 	if (r->method == KMETHOD_POST)
 		{
@@ -1445,6 +1733,12 @@ main(void)
 		{
 		case (PAGE_INDEX):
 			handle_index(&r, u);
+			break;
+		case (PAGE_IMAGES):
+			handle_images(&r, p, dbid, u);
+			break;
+		case (PAGE_NEW_IMAGE):
+			handle_new_image(&r, p, dbid, u);
 			break;
 		case (PAGE_CV):
 			handle_cv(&r, p, dbid, u);
