@@ -1141,7 +1141,7 @@ handle_new_image(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1226,7 +1226,7 @@ handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1321,7 +1321,7 @@ handle_new_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1383,7 +1383,7 @@ handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1453,7 +1453,7 @@ handle_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *us
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1515,7 +1515,7 @@ handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *u
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
@@ -1667,7 +1667,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		}
 	else
 		{
-		open_head(r, KHTTP_405);
+		open_response(r, KHTTP_405);
 		khttp_puts(r, "405 Method Not Allowed");
 		}
 	}
