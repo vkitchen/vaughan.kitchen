@@ -61,6 +61,7 @@ struct post
 	time_t     ctime;
 	time_t     mtime;
 	char      *content;
+	char      *image;
 	};
 
 struct post_array
@@ -280,6 +281,7 @@ db_post_free(struct post *p)
 	free(p->slug);
 	free(p->snippet);
 	free(p->content);
+	free(p->image);
 	free(p);
 	}
 
@@ -313,6 +315,10 @@ db_post_fill(struct post *post, const struct sqlbox_parmset *res)
 	// content
 	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
 		post->content = kstrdup(res->ps[6].sparm);
+
+	// image
+	if (res->psz >= 8 && res->ps[7].type == SQLBOX_PARM_STRING)
+		post->image = kstrdup(res->ps[7].sparm);
 	}
 
 void
@@ -971,6 +977,11 @@ template(size_t key, void *arg)
 				for (size_t i = 0; i < data->posts->length; i++)
 					{
 					khtml_elem(data->req, KELEM_LI);
+					if (data->posts->store[i]->image != NULL)
+						{
+						snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->posts->store[i]->image);
+						khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR__MAX);
+						}
 					// TODO this seems hacky
 					if (data->page == PAGE_BLOG)
 						snprintf(buf, sizeof(buf), "/post/%s", data->posts->store[i]->slug);

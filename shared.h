@@ -76,7 +76,8 @@ enum stmt
 	};
 
 #define USER "users.id,users.display,users.login"
-#define POST "id,title,slug,snippet,ctime,mtime,content"
+#define POST "posts.id,posts.title,posts.slug,posts.snippet,posts.ctime,posts.mtime,posts.content,images.hash"
+#define RECIPE "recipes.id,recipes.title,recipes.slug,recipes.snippet,recipes.ctime,recipes.mtime,recipes.content,images.hash"
 
 struct sqlbox_pstmt pstmts[STMT__MAX];
 

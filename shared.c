@@ -63,21 +63,21 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	/* STMT_PAGE_UPDATE */
 	{ .stmt = (char *)"UPDATE pages SET mtime=?,content=? WHERE title=?" },
 	/* STMT_POST_GET */
-	{ .stmt = (char *)"SELECT " POST " FROM posts WHERE slug=?" },
+	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id WHERE slug=?" },
 	/* STMT_POST_NEW */
 	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
 	/* STMT_POST_UPDATE */
 	{ .stmt = (char *)"UPDATE posts SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
 	/* STMT_POST_LIST */
-	{ .stmt = (char *)"SELECT " POST " FROM posts ORDER BY ctime DESC" },
+	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id ORDER BY posts.id ASC" },
 	/* STMT_RECIPE_GET */
-	{ .stmt = (char *)"SELECT " POST " FROM recipes WHERE slug=?" },
+	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id WHERE slug=?" },
 	/* STMT_RECIPE_NEW */
 	{ .stmt = (char *)"INSERT INTO recipes (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
 	/* STMT_RECIPE_UPDATE */
 	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
 	/* STMT_RECIPE_LIST */
-	{ .stmt = (char *)"SELECT " POST " FROM recipes ORDER BY ctime DESC" },
+	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id ORDER BY recipes.id ASC" },
 	/* STMT_COCKTAIL_GET */
 	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails WHERE slug=?" },
 	/* STMT_COCKTAIL_LIST */
