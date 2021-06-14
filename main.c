@@ -347,11 +347,6 @@ template(size_t key, void *arg)
 				for (size_t i = 0; i < data->posts->length; i++)
 					{
 					khtml_elem(data->req, KELEM_LI);
-					if (((struct post *)data->posts->store[i])->image != NULL)
-						{
-						snprintf(buf, sizeof(buf), "/static/img/%s.jpg", ((struct post *)data->posts->store[i])->image);
-						khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR__MAX);
-						}
 					// TODO this seems hacky
 					if (data->page == PAGE_BLOG)
 						snprintf(buf, sizeof(buf), "/post/%s", ((struct post *)data->posts->store[i])->slug);
@@ -359,7 +354,14 @@ template(size_t key, void *arg)
 						snprintf(buf, sizeof(buf), "/recipe/%s", ((struct post *)data->posts->store[i])->slug);
 					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 					khtml_puts(data->req, ((struct post *)data->posts->store[i])->title);
-					khtml_closeelem(data->req, 2);
+					khtml_closeelem(data->req, 1);
+					if (((struct post *)data->posts->store[i])->image != NULL)
+						{
+						khtml_elem(data->req, KELEM_BR);
+						snprintf(buf, sizeof(buf), "/static/img/%s.jpg", ((struct post *)data->posts->store[i])->image);
+						khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "200", KATTR__MAX);
+						}
+					khtml_closeelem(data->req, 1);
 					}
 				khtml_closeelem(data->req, 1);
 				}
