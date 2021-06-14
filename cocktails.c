@@ -12,45 +12,10 @@
 #include <kcgi.h>
 #include <kcgihtml.h>
 
-#include "shared.h"
+#include "db.h"
+#include "dynarray.h"
 #include "cocktails.h"
-
-struct ingredient
-	{
-	int64_t    id;
-	char      *name;
-	char      *measure;
-	char      *unit;
-	};
-
-struct ingredient_array
-	{
-	size_t capacity;
-	size_t length;
-	struct ingredient **store;
-	};
-
-struct cocktail
-	{
-	int64_t                  id;
-	char                    *title;
-	char                    *slug;
-	char                    *image;
-	time_t                   ctime;
-	time_t                   mtime;
-	char                    *serve;
-	char                    *garnish;
-	char                    *drinkware;
-	char                    *method;
-	struct ingredient_array *ingredients;
-	};
-
-struct cocktail_array
-	{
-	size_t capacity;
-	size_t length;
-	struct cocktail **store;
-	};
+#include "shared.h"
 
 struct tmpl_data
 	{
@@ -59,7 +24,7 @@ struct tmpl_data
 	char                  *title;
 	char                  *query;
 	struct user           *user;
-	struct cocktail_array *cocktails;
+	struct dynarray       *cocktails;
 	size_t                 page_no; /* pagination */
 	};
 
@@ -110,244 +75,6 @@ const char *drink_keys[DRINK_KEY__MAX] =
 	"drink-method",
 	};
 
-// TODO merge this into pointer array?
-// will we get type punning errors if we do that?
-struct cocktail_array *
-cocktail_array_new()
-	{
-	struct cocktail_array *a = kmalloc(sizeof(struct cocktail_array));
-	a->capacity = 256;
-	a->length = 0;
-	a->store = kmalloc(a->capacity * sizeof(struct cocktail *));
-	return a;
-	}
-
-void
-cocktail_array_append(struct cocktail_array *a, struct cocktail *c)
-	{
-	if (a->length == a->capacity)
-		{
-		a->capacity *= 2;
-		a->store = krealloc(a->store, a->capacity * sizeof(struct cocktail *));
-		}
-	a->store[a->length] = c;
-	a->length++;
-	}
-
-struct ingredient_array *
-ingredient_array_new()
-	{
-	struct ingredient_array *a = kmalloc(sizeof(struct ingredient_array));
-	a->capacity = 256;
-	a->length = 0;
-	a->store = kmalloc(a->capacity * sizeof(struct ingredient *));
-	return a;
-	}
-
-void
-ingredient_array_append(struct ingredient_array *a, struct ingredient *i)
-	{
-	if (a->length == a->capacity)
-		{
-		a->capacity *= 2;
-		a->store = krealloc(a->store, a->capacity * sizeof(struct ingredient *));
-		}
-	a->store[a->length] = i;
-	a->length++;
-	}
-
-struct ingredient_array *
-db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
-	{
-	struct sqlbox_parm parms[] =
-		{
-		{ .iparm = cocktail_id, .type = SQLBOX_PARM_INT },
-		};
-
-	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_INGREDIENTS, 1, parms, 0)))
-		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct ingredient_array *ingredients = ingredient_array_new();
-
-	const struct sqlbox_parmset *res;
-	for (;;)
-		{
-		if ((res = sqlbox_step(p, stmtid)) == NULL)
-			errx(EXIT_FAILURE, "sqlbox_step");
-
-		if (res->code != SQLBOX_CODE_OK)
-			errx(EXIT_FAILURE, "res.code");
-
-		// no results or done
-		if (res->psz == 0)
-			break;
-
-		struct ingredient *ingredient = kmalloc(sizeof(struct ingredient));
-		memset(ingredient, 0, sizeof(struct ingredient));
-
-		// id
-		if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-			ingredient->id = res->ps[0].iparm;
-
-		// name
-		if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-			ingredient->name = kstrdup(res->ps[1].sparm);
-
-		// measure
-		if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-			ingredient->measure = kstrdup(res->ps[2].sparm);
-
-		// unit
-		if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-			ingredient->unit = kstrdup(res->ps[3].sparm);
-
-		ingredient_array_append(ingredients, ingredient);
-		}
-
-	// no results
-	if (ingredients->length == 0)
-		{
-		// TODO free
-		ingredients = NULL;
-		}
-
-	// finalise
-	if (!sqlbox_finalise(p, stmtid))
-		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return ingredients;
-	}
-
-void
-db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
-	{
-	// id
-	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-		cocktail->id = res->ps[0].iparm;
-
-	// title
-	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-		cocktail->title = kstrdup(res->ps[1].sparm);
-
-	// slug
-	if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-		cocktail->slug = kstrdup(res->ps[2].sparm);
-
-	// image
-	if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-		cocktail->image = kstrdup(res->ps[3].sparm);
-
-	// ctime
-	if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
-		cocktail->ctime = res->ps[4].iparm;
-
-	// mtime
-	if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_INT)
-		cocktail->mtime = res->ps[5].iparm;
-
-	// serve
-	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
-		cocktail->serve = kstrdup(res->ps[6].sparm);
-
-	// garnish
-	if (res->psz >= 8 && res->ps[7].type == SQLBOX_PARM_STRING)
-		cocktail->garnish = kstrdup(res->ps[7].sparm);
-
-	// drinkware
-	if (res->psz >= 9 && res->ps[8].type == SQLBOX_PARM_STRING)
-		cocktail->drinkware = kstrdup(res->ps[8].sparm);
-
-	// method
-	if (res->psz >= 10 && res->ps[9].type == SQLBOX_PARM_STRING)
-		cocktail->method = kstrdup(res->ps[9].sparm);
-	}
-
-struct cocktail *
-db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug)
-	{
-	struct sqlbox_parm parms[] =
-		{
-		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
-		};
-
-	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_GET, 1, parms, 0)))
-		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	const struct sqlbox_parmset *res;
-	if ((res = sqlbox_step(p, stmtid)) == NULL)
-		errx(EXIT_FAILURE, "sqlbox_step");
-
-	if (res->code != SQLBOX_CODE_OK)
-		errx(EXIT_FAILURE, "res.code");
-
-	// no results
-	if (res->psz == 0)
-		{
-		if (!sqlbox_finalise(p, stmtid))
-			errx(EXIT_FAILURE, "sqlbox_finalise");
-
-		return NULL;
-		}
-
-	struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
-	memset(cocktail, 0, sizeof(struct cocktail));
-
-	db_cocktail_fill(cocktail, res);
-	cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
-
-	// finalise
-	if (!sqlbox_finalise(p, stmtid))
-		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return cocktail;
-	}
-
-struct cocktail_array *
-db_cocktail_list(struct sqlbox *p, size_t dbid)
-	{
-	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_LIST, 0, NULL, 0)))
-		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct cocktail_array *cocktails = cocktail_array_new();
-
-	const struct sqlbox_parmset *res;
-	for (;;)
-		{
-		if ((res = sqlbox_step(p, stmtid)) == NULL)
-			errx(EXIT_FAILURE, "sqlbox_step");
-
-		if (res->code != SQLBOX_CODE_OK)
-			errx(EXIT_FAILURE, "res.code");
-
-		// no results or done
-		if (res->psz == 0)
-			break;
-
-		struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
-		memset(cocktail, 0, sizeof(struct cocktail));
-
-		db_cocktail_fill(cocktail, res);
-		cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
-
-		cocktail_array_append(cocktails, cocktail);
-		}
-
-	// no results
-	if (cocktails->length == 0)
-		{
-		// TODO free
-		cocktails = NULL;
-		}
-
-	// finalise
-	if (!sqlbox_finalise(p, stmtid))
-		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return cocktails;
-	}
 
 void
 render_ingredient(char *buf, size_t bufsize, char *name, char *measure, char *unit)
@@ -575,7 +302,7 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 		return;
 		}
 
-	struct cocktail_array *cocktails = db_cocktail_list(p, dbid);
+	struct dynarray *cocktails = db_cocktail_list(p, dbid);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.title = "Search Results";
@@ -591,19 +318,20 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 	for (size_t i = 0; i < length; i++)
 		{
 		int found = 0;
-		if (strcasestr(cocktails->store[i]->title, query->val) != NULL)
+		struct cocktail *cocktail = cocktails->store[i];
+		if (strcasestr(cocktail->title, query->val) != NULL)
 			found = 1;
 
 		if (!found)
-			for (size_t j = 0; j < cocktails->store[i]->ingredients->length; j++)
-				if (strcasestr(cocktails->store[i]->ingredients->store[j]->name, query->val) != NULL)
+			for (size_t j = 0; j < cocktail->ingredients->length; j++)
+				if (strcasestr(((struct ingredient *)cocktail->ingredients->store[j])->name, query->val) != NULL)
 					{
 					found = 1;
 					break;
 					}
 
 		if (found)
-			cocktail_array_append(cocktails, cocktails->store[i]);
+			dynarray_append(cocktails, cocktails->store[i]);
 		}
 
 	open_response(r, KHTTP_200);

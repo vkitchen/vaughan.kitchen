@@ -3,12 +3,16 @@ CFLAGS = -Wall -Wextra -O2 -g `pkg-config --cflags kcgi-html sqlbox lowdown`
 LDFLAGS = -static `pkg-config --static --libs kcgi-html sqlbox lowdown`
 
 HEADERS = \
-	shared.h \
-	cocktails.h
+	cocktails.h \
+	db.h \
+	dynarray.h \
+	shared.h
 
 SRC = \
-	shared.c \
-	cocktails.c
+	cocktails.c \
+	db.c \
+	dynarray.c \
+	shared.c
 
 OBJECTS = $(SRC:.c=.o)
 
