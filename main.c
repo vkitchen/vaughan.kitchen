@@ -1024,7 +1024,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		open_head(r, KHTTP_302);
 		khttp_head(r, kresps[KRESP_LOCATION], "/");
 
-		struct user *user = db_user_get(p, dbid, username->val, password->val);
+		struct user *user = db_user_checkpass(p, dbid, username->val, password->val);
 		if (user != NULL)
 			{
 			cookie = arc4random();

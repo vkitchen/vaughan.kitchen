@@ -80,12 +80,11 @@ struct cocktail
 	char                    *garnish;
 	char                    *drinkware;
 	char                    *method;
-	struct dynarray *ingredients;
+	struct dynarray         *ingredients;
 	};
 
-// TODO think of new name for this function
 struct user *
-db_user_get(struct sqlbox *p, size_t dbid, const char *username, const char *password);
+db_user_checkpass(struct sqlbox *p, size_t dbid, const char *username, const char *password);
 
 void
 db_sess_new(struct sqlbox *p, size_t dbid, int64_t cookie, struct user *user);
@@ -108,7 +107,6 @@ db_page_get(struct sqlbox *p, size_t dbid, char *page);
 void
 db_page_update(struct sqlbox *p, size_t dbid, char *page, char *content);
 
-// TODO restrict statements
 struct dynarray *
 db_post_list(struct sqlbox *p, size_t dbid, size_t stmt);
 

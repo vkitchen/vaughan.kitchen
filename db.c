@@ -68,57 +68,40 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"SELECT id,name,measure,unit FROM cocktail_ingredients WHERE cocktail_id=? ORDER BY id ASC" },
 	};
 
-void
-db_post_free(struct post *p)
+/*
+static void
+scan_float(double *p, const struct sqlbox_parmset *res, size_t i)
 	{
-	if (p == NULL)
-		return;
-	free(p->title);
-	free(p->slug);
-	free(p->snippet);
-	free(p->content);
-	free(p->image);
-	free(p);
+	if (res->psz > i && res->ps[i].type == SQLBOX_PARM_FLOAT)
+		*p = res->ps[i].fparm;
+	}
+*/
+
+static void
+scan_int(int64_t *p, const struct sqlbox_parmset *res, size_t i)
+	{
+	if (res->psz > i && res->ps[i].type == SQLBOX_PARM_INT)
+		*p = res->ps[i].iparm;
 	}
 
-void
-db_post_fill(struct post *post, const struct sqlbox_parmset *res)
+static void
+scan_string(char **p, const struct sqlbox_parmset *res, size_t i)
 	{
-	// id
-	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-		post->id = res->ps[0].iparm;
-
-	// title
-	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-		post->title = kstrdup(res->ps[1].sparm);
-
-	// slug
-	if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-		post->slug = kstrdup(res->ps[2].sparm);
-
-	// snippet
-	if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-		post->snippet = kstrdup(res->ps[3].sparm);
-
-	// ctime
-	if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
-		post->ctime = res->ps[4].iparm;
-
-	// mtime
-	if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_INT)
-		post->mtime = res->ps[5].iparm;
-
-	// content
-	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
-		post->content = kstrdup(res->ps[6].sparm);
-
-	// image
-	if (res->psz >= 8 && res->ps[7].type == SQLBOX_PARM_STRING)
-		post->image = kstrdup(res->ps[7].sparm);
+	if (res->psz > i && res->ps[i].type == SQLBOX_PARM_STRING)
+		*p = kstrdup(res->ps[i].sparm);
 	}
 
-void
-db_user_free(struct user *u)
+static void
+user_fill(struct user *user, const struct sqlbox_parmset *res)
+	{
+	size_t i = 0;
+	scan_int(&user->id, res, i++);
+	scan_string(&user->name, res, i++);
+	scan_string(&user->username, res, i++);
+	}
+
+static void
+user_free(struct user *u)
 	{
 	if (u == NULL)
 		return;
@@ -127,25 +110,8 @@ db_user_free(struct user *u)
 	free(u);
 	}
 
-void
-db_user_fill(struct user *user, const struct sqlbox_parmset *res)
-	{
-	// id
-	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-		user->id = res->ps[0].iparm;
-
-	// display
-	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-		user->name = kstrdup(res->ps[1].sparm);
-
-	// login
-	if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-		user->username = kstrdup(res->ps[2].sparm);
-	}
-
-// TODO think of new name for this function
 struct user *
-db_user_get(struct sqlbox *p, size_t dbid, const char *username, const char *password)
+db_user_checkpass(struct sqlbox *p, size_t dbid, const char *username, const char *password)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -175,12 +141,11 @@ db_user_get(struct sqlbox *p, size_t dbid, const char *username, const char *pas
 	struct user *user = kmalloc(sizeof(struct user));
 	memset(user, 0, sizeof(struct user));
 
-	db_user_fill(user, res);
+	user_fill(user, res);
 
 	// password
 	char *hash = NULL;
-	if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-		hash = kstrdup(res->ps[3].sparm);
+	scan_string(&hash, res, 3);
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
@@ -188,7 +153,7 @@ db_user_get(struct sqlbox *p, size_t dbid, const char *username, const char *pas
 
 	if (crypt_checkpass(password, hash) != 0)
 		{
-		db_user_free(user);
+		user_free(user);
 		user = NULL;
 		}
 
@@ -255,7 +220,7 @@ db_sess_get(struct sqlbox *p, size_t dbid, int64_t cookie)
 	struct user *user = kmalloc(sizeof(struct user));
 	memset(user, 0, sizeof(struct user));
 
-	db_user_fill(user, res);
+	user_fill(user, res);
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
@@ -314,6 +279,32 @@ db_image_new(struct sqlbox *p, size_t dbid, char *title, char *alt, char *attrib
 		errx(EXIT_FAILURE, "sqlbox_finalise");
 	}
 
+static void
+image_fill(struct image *image, const struct sqlbox_parmset *res)
+	{
+	size_t i = 0;
+	scan_int(&image->id, res, i++);
+	scan_string(&image->title, res, i++);
+	scan_string(&image->alt, res, i++);
+	scan_string(&image->attribution, res, i++);
+	scan_int(&image->ctime, res, i++);
+	scan_string(&image->hash, res, i++);
+	scan_string(&image->format, res, i++);
+	}
+
+static void
+image_free(struct image *i)
+	{
+	if (i == NULL)
+		return;
+	free(i->title);
+	free(i->alt);
+	free(i->attribution);
+	free(i->hash);
+	free(i->format);
+	free(i);
+	}
+
 struct dynarray *
 db_image_list(struct sqlbox *p, size_t dbid)
 	{
@@ -321,7 +312,7 @@ db_image_list(struct sqlbox *p, size_t dbid)
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_LIST, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
-	struct dynarray *images = dynarray_new(NULL);
+	struct dynarray *images = dynarray_new((void (*)(void *))&image_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -338,34 +329,7 @@ db_image_list(struct sqlbox *p, size_t dbid)
 
 		struct image *image = kmalloc(sizeof(struct image));
 		memset(image, 0, sizeof(struct image));
-
-		// id
-		if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-			image->id = res->ps[0].iparm;
-
-		// title
-		if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-			image->title = kstrdup(res->ps[1].sparm);
-
-		// alt
-		if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-			image->alt = kstrdup(res->ps[2].sparm);
-
-		// attribution
-		if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-			image->attribution = kstrdup(res->ps[3].sparm);
-
-		// ctime
-		if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
-			image->ctime = res->ps[4].iparm;
-
-		// hash
-		if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_STRING)
-			image->hash = kstrdup(res->ps[5].sparm);
-
-		// format
-		if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
-			image->format = kstrdup(res->ps[6].sparm);
+		image_fill(image, res);
 
 		dynarray_append(images, image);
 		}
@@ -373,7 +337,7 @@ db_image_list(struct sqlbox *p, size_t dbid)
 	// no results
 	if (images->length == 0)
 		{
-		// TODO free
+		dynarray_free(images);
 		images = NULL;
 		}
 
@@ -384,6 +348,34 @@ db_image_list(struct sqlbox *p, size_t dbid)
 	return images;
 	}
 
+static void
+post_fill(struct post *post, const struct sqlbox_parmset *res)
+	{
+	size_t i = 0;
+	scan_int(&post->id, res, i++);
+	scan_string(&post->title, res, i++);
+	scan_string(&post->slug, res, i++);
+	scan_string(&post->snippet, res, i++);
+	scan_int(&post->ctime, res, i++);
+	scan_int(&post->mtime, res, i++);
+	scan_string(&post->content, res, i++);
+	scan_string(&post->image, res, i++);
+	}
+
+static void
+post_free(struct post *p)
+	{
+	if (p == NULL)
+		return;
+	free(p->title);
+	free(p->slug);
+	free(p->snippet);
+	free(p->content);
+	free(p->image);
+	free(p);
+	}
+
+// TODO make a page type
 struct post *
 db_page_get(struct sqlbox *p, size_t dbid, char *page)
 	{
@@ -415,13 +407,8 @@ db_page_get(struct sqlbox *p, size_t dbid, char *page)
 	struct post *post = kmalloc(sizeof(struct post));
 	memset(post, 0, sizeof(struct post));
 
-	// mtime
-	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-		post->mtime = res->ps[0].iparm;
-
-	// content
-	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-		post->content = kstrdup(res->ps[1].sparm);
+	scan_int(&post->mtime, res, 0);
+	scan_string(&post->content, res, 1);
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
@@ -466,7 +453,7 @@ db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
-	struct dynarray *posts = dynarray_new(NULL);
+	struct dynarray *posts = dynarray_new((void (*)(void *))&post_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -483,8 +470,8 @@ db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
 
 		struct post *post = kmalloc(sizeof(struct post));
 		memset(post, 0, sizeof(struct post));
+		post_fill(post, res);
 
-		db_post_fill(post, res);
 		dynarray_append(posts, post);
 		}
 
@@ -532,8 +519,7 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, char *slug)
 
 	struct post *post = kmalloc(sizeof(struct post));
 	memset(post, 0, sizeof(struct post));
-
-	db_post_fill(post, res);
+	post_fill(post, res);
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
@@ -603,6 +589,27 @@ db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *sl
 /* COCKTAILS */
 /*************/
 
+static void
+ingredient_fill(struct ingredient *ingredient, const struct sqlbox_parmset *res)
+	{
+	size_t i = 0;
+	scan_int(&ingredient->id, res, i++);
+	scan_string(&ingredient->name, res, i++);
+	scan_string(&ingredient->measure, res, i++);
+	scan_string(&ingredient->unit, res, i++);
+	}
+
+static void
+ingredient_free(struct ingredient *i)
+	{
+	if (i == NULL)
+		return;
+	free(i->name);
+	free(i->measure);
+	free(i->unit);
+	free(i);
+	}
+
 struct dynarray *
 db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	{
@@ -615,7 +622,7 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_INGREDIENTS, 1, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
-	struct dynarray *ingredients = dynarray_new(NULL);
+	struct dynarray *ingredients = dynarray_new((void (*)(void *))&ingredient_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -632,22 +639,7 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 
 		struct ingredient *ingredient = kmalloc(sizeof(struct ingredient));
 		memset(ingredient, 0, sizeof(struct ingredient));
-
-		// id
-		if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-			ingredient->id = res->ps[0].iparm;
-
-		// name
-		if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-			ingredient->name = kstrdup(res->ps[1].sparm);
-
-		// measure
-		if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-			ingredient->measure = kstrdup(res->ps[2].sparm);
-
-		// unit
-		if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-			ingredient->unit = kstrdup(res->ps[3].sparm);
+		ingredient_fill(ingredient, res);
 
 		dynarray_append(ingredients, ingredient);
 		}
@@ -655,7 +647,7 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	// no results
 	if (ingredients->length == 0)
 		{
-		// TODO free
+		dynarray_free(ingredients);
 		ingredients = NULL;
 		}
 
@@ -666,48 +658,37 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	return ingredients;
 	}
 
-void
-db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
+static void
+cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
 	{
-	// id
-	if (res->psz >= 1 && res->ps[0].type == SQLBOX_PARM_INT)
-		cocktail->id = res->ps[0].iparm;
+	size_t i = 0;
+	scan_int(&cocktail->id, res, i++);
+	scan_string(&cocktail->title, res, i++);
+	scan_string(&cocktail->slug, res, i++);
+	scan_string(&cocktail->image, res, i++);
+	scan_int(&cocktail->ctime, res, i++);
+	scan_int(&cocktail->mtime, res, i++);
+	scan_string(&cocktail->serve, res, i++);
+	scan_string(&cocktail->garnish, res, i++);
+	scan_string(&cocktail->drinkware, res, i++);
+	scan_string(&cocktail->method, res, i++);
+	}
 
-	// title
-	if (res->psz >= 2 && res->ps[1].type == SQLBOX_PARM_STRING)
-		cocktail->title = kstrdup(res->ps[1].sparm);
-
-	// slug
-	if (res->psz >= 3 && res->ps[2].type == SQLBOX_PARM_STRING)
-		cocktail->slug = kstrdup(res->ps[2].sparm);
-
-	// image
-	if (res->psz >= 4 && res->ps[3].type == SQLBOX_PARM_STRING)
-		cocktail->image = kstrdup(res->ps[3].sparm);
-
-	// ctime
-	if (res->psz >= 5 && res->ps[4].type == SQLBOX_PARM_INT)
-		cocktail->ctime = res->ps[4].iparm;
-
-	// mtime
-	if (res->psz >= 6 && res->ps[5].type == SQLBOX_PARM_INT)
-		cocktail->mtime = res->ps[5].iparm;
-
-	// serve
-	if (res->psz >= 7 && res->ps[6].type == SQLBOX_PARM_STRING)
-		cocktail->serve = kstrdup(res->ps[6].sparm);
-
-	// garnish
-	if (res->psz >= 8 && res->ps[7].type == SQLBOX_PARM_STRING)
-		cocktail->garnish = kstrdup(res->ps[7].sparm);
-
-	// drinkware
-	if (res->psz >= 9 && res->ps[8].type == SQLBOX_PARM_STRING)
-		cocktail->drinkware = kstrdup(res->ps[8].sparm);
-
-	// method
-	if (res->psz >= 10 && res->ps[9].type == SQLBOX_PARM_STRING)
-		cocktail->method = kstrdup(res->ps[9].sparm);
+static void
+cocktail_free(struct cocktail *c)
+	{
+	if (c == NULL)
+		return;
+	free(c->title);
+	free(c->slug);
+	free(c->image);
+	free(c->serve);
+	free(c->garnish);
+	free(c->drinkware);
+	free(c->method);
+	if (c->ingredients != NULL)
+		dynarray_free(c->ingredients);
+	free(c);
 	}
 
 struct cocktail *
@@ -741,7 +722,7 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug)
 	struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
 	memset(cocktail, 0, sizeof(struct cocktail));
 
-	db_cocktail_fill(cocktail, res);
+	cocktail_fill(cocktail, res);
 	cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
 
 	// finalise
@@ -758,7 +739,7 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_LIST, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
-	struct dynarray *cocktails = dynarray_new(NULL);
+	struct dynarray *cocktails = dynarray_new((void (*)(void *))&cocktail_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -776,7 +757,7 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 		struct cocktail *cocktail = kmalloc(sizeof(struct cocktail));
 		memset(cocktail, 0, sizeof(struct cocktail));
 
-		db_cocktail_fill(cocktail, res);
+		cocktail_fill(cocktail, res);
 		cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
 
 		dynarray_append(cocktails, cocktail);
@@ -785,7 +766,7 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 	// no results
 	if (cocktails->length == 0)
 		{
-		// TODO free
+		dynarray_free(cocktails);
 		cocktails = NULL;
 		}
 
