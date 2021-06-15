@@ -16,6 +16,7 @@
 #include "dynarray.h"
 #include "cocktails.h"
 #include "shared.h"
+#include "templates.h"
 
 struct tmpl_data
 	{

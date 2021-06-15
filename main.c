@@ -23,6 +23,7 @@
 #include "dynarray.h"
 #include "cocktails.h"
 #include "shared.h"
+#include "templates.h"
 
 #define LOGFILE "vaughan.kitchen.log"
 

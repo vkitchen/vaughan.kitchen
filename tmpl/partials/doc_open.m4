@@ -8,9 +8,3 @@
 		<h1>Vaughan</h1>
 		<h1>Kitchen</h1>
 		<a href="/">Home</a>
-		@@edit-recipe-link@@
-		<br>
-		<h3>@@title@@</h3>
-		@@content@@
-	</body>
-</html>
