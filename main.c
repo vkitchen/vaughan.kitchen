@@ -24,9 +24,6 @@
 #include "cocktails.h"
 #include "shared.h"
 
-// TODO use fastcgi
-// TODO read all templates upon startup and then sandbox more heavily
-
 #define LOGFILE "vaughan.kitchen.log"
 
 enum page
@@ -405,7 +402,34 @@ open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, 
 	t->arg = (void *)data;
 	t->cb = template;
 	}
-	
+
+static void
+send_400(struct kreq *r)
+	{
+	open_response(r, KHTTP_400);
+	khttp_puts(r, "400 Bad Request");
+	}
+
+static void
+send_404(struct kreq *r)
+	{
+	open_response(r, KHTTP_404);
+	khttp_puts(r, "404 Not Found");
+	}
+
+static void
+send_405(struct kreq *r)
+	{
+	open_response(r, KHTTP_405);
+	khttp_puts(r, "405 Method Not Allowed");
+	}
+
+static void
+send_500(struct kreq *r)
+	{
+	open_response(r, KHTTP_500);
+	khttp_puts(r, "500 Internal Server Error");
+	}
 
 static void
 handle_index(struct kreq *r, struct user *user)
@@ -432,11 +456,7 @@ handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	// Not logged in
 	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+		return send_404(r);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_IMAGES;
@@ -449,88 +469,69 @@ handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_new_image(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_get_new_image(struct kreq *r)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_NEW_IMAGE;
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_newimage_data, tmpl_newimage_size);
+	}
+
+static void
+handle_post_new_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	char buf[2048];
 	MD5_CTX md5;
 	char hash[MD5_DIGEST_STRING_LENGTH + 1];
 	u_char digest[MD5_DIGEST_STRING_LENGTH + 1];
 
-	struct tmpl_data data;
-	struct ktemplate t;
-	struct khtmlreq hr;
+	struct kpair *title, *alt, *attribution, *image;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (alt = r->fieldmap[PARAM_ALT]) == NULL ||
+	    (attribution = r->fieldmap[PARAM_ATTRIBUTION]) == NULL ||
+	    (image = r->fieldmap[PARAM_IMAGE]) == NULL)
+		return send_400(r);
 
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *title, *alt, *attribution, *image;
+	// TODO md5 image. Save image. Save md5 in DB
+	// TODO check jpg is valid
+	// TODO remove EXIF
 
-		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
-		    (alt = r->fieldmap[PARAM_ALT]) == NULL ||
-		    (attribution = r->fieldmap[PARAM_ATTRIBUTION]) == NULL ||
-		    (image = r->fieldmap[PARAM_IMAGE]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
+	MD5Init(&md5);
+	MD5Update(&md5, image->val, image->valsz);
+	MD5Final(digest, &md5);
+	if (b64_ntop(digest, MD5_DIGEST_LENGTH, hash, sizeof(hash)) == -1)
+		errx(1, "error encoding base64");
 
-		// TODO md5 image. Save image. Save md5 in DB
-		// TODO check jpg is valid
-		// TODO remove EXIF
+	// TODO this seems a bit naughty
+	size_t len = strlen(hash);
+	if (hash[len-1] == '=')
+		hash[len-1] = '\0';
+	if (hash[len-2] == '=')
+		hash[len-2] = '\0';
 
-		MD5Init(&md5);
-		MD5Update(&md5, image->val, image->valsz);
-		MD5Final(digest, &md5);
-		if (b64_ntop(digest, MD5_DIGEST_LENGTH, hash, sizeof(hash)) == -1)
-			errx(1, "error encoding base64");
+	db_image_new(p, dbid, title->val, alt->val, attribution->val, hash, "jpg");
 
-		// TODO this seems a bit naughty
-		size_t len = strlen(hash);
-		if (hash[len-1] == '=')
-			hash[len-1] = '\0';
-		if (hash[len-2] == '=')
-			hash[len-2] = '\0';
+	// now actually write the image
+	// TODO check request size (httpd already does some of that for us)
+	snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
+	file_spurt(buf, image->val, image->valsz);
 
-		db_image_new(p, dbid, title->val, alt->val, attribution->val, hash, "jpg");
-
-		// now actually write the image
-		// TODO check request size (httpd already does some of that for us)
-		snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
-		file_spurt(buf, image->val, image->valsz);
-
-		// open_head(r, KHTTP_302);
-		// khttp_head(r, kresps[KRESP_LOCATION], "/images");
-		// khttp_body(r);
-		open_response(r, KHTTP_200);
-		khttp_printf(r, "Size: %zd", image->valsz);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_NEW_IMAGE;
-		data.user = user;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_newimage_data, tmpl_newimage_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	// open_head(r, KHTTP_302);
+	// khttp_head(r, kresps[KRESP_LOCATION], "/images");
+	// khttp_body(r);
+	open_response(r, KHTTP_200);
+	khttp_printf(r, "Size: %zd", image->valsz);
 	}
 
 static void
-handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -538,15 +539,10 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	struct post *post = db_page_get(p, dbid, "cv");
 	if (post == NULL)
-		{
-		open_response(r, KHTTP_500);
-		khttp_puts(r, "500 Internal Server Error");
-		return;
-		}
+		return send_500(r);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_CV;
-	data.user = user;
 	data.post = post;
 	data.raw = 1;
 
@@ -556,66 +552,43 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_get_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	struct post *post = db_page_get(p, dbid, "cv");
+	if (post == NULL)
+		return send_404(r);
 
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *content;
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_EDIT_CV;
+	data.post = post;
+	data.raw = 1;
 
-		if ((content = r->fieldmap[PARAM_CONTENT]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
-
-		db_page_update(p, dbid, "cv", content->val);
-
-		open_head(r, KHTTP_302);
-		khttp_head(r, kresps[KRESP_LOCATION], "/cv");
-		khttp_body(r);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		struct post *post = db_page_get(p, dbid, "cv");
-		if (post == NULL)
-			{
-			open_response(r, KHTTP_404);
-			khttp_puts(r, "404 Not Found");
-			return;
-			}
-
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_EDIT_CV;
-		data.user = user;
-		data.post = post;
-		data.raw = 1;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_editcv_data, tmpl_editcv_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_editcv_data, tmpl_editcv_size);
 	}
 
 static void
-handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_post_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *content;
+
+	if ((content = r->fieldmap[PARAM_CONTENT]) == NULL)
+		return send_400(r);
+
+	db_page_update(p, dbid, "cv", content->val);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/cv");
+	khttp_body(r);
+	}
+
+static void
+handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -623,7 +596,6 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_BLOG;
-	data.user = user;
 	data.posts = db_post_list(p, dbid, STMT_POST_LIST);
 
 	open_response(r, KHTTP_200);
@@ -632,7 +604,7 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -640,15 +612,10 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
 	if (post == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+		return send_404(r);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_POST;
-	data.user = user;
 	data.post = post;
 
 	open_response(r, KHTTP_200);
@@ -657,122 +624,78 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_new_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_get_new_post(struct kreq *r)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_NEW_POST;
 
-
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *title, *slug, *snippet, *content;
-
-		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
-		    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
-		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
-		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
-
-		db_post_new(p, dbid, STMT_POST_NEW, title->val, slug->val, snippet->val, content->val);
-
-		open_head(r, KHTTP_302);
-		khttp_head(r, kresps[KRESP_LOCATION], "/blag");
-		khttp_body(r);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_NEW_POST;
-		data.user = user;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_newpost_data, tmpl_newpost_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_newpost_data, tmpl_newpost_size);
 	}
 
 static void
-handle_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *title, *slug, *snippet, *content;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
+	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+		return send_400(r);
+
+	db_post_new(p, dbid, STMT_POST_NEW, title->val, slug->val, snippet->val, content->val);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/blag");
+	khttp_body(r);
+	}
+
+static void
+handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
+	if (post == NULL)
+		return send_404(r);
 
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_EDIT_POST;
+	data.post = post;
+	data.raw = 1;
 
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *title, *snippet, *content;
-
-		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
-		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
-		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
-
-		db_post_update(p, dbid, STMT_POST_UPDATE, title->val, r->path, snippet->val, content->val);
-
-		open_head(r, KHTTP_302);
-		khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
-		khttp_body(r);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
-		if (post == NULL)
-			{
-			open_response(r, KHTTP_404);
-			khttp_puts(r, "404 Not Found");
-			return;
-			}
-
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_EDIT_POST;
-		data.user = user;
-		data.post = post;
-		data.raw = 1;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_editpost_data, tmpl_editpost_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_editpost_data, tmpl_editpost_size);
 	}
 
 static void
-handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_post_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *title, *snippet, *content;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+		return send_400(r);
+
+	db_post_update(p, dbid, STMT_POST_UPDATE, title->val, r->path, snippet->val, content->val);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
+	khttp_body(r);
+	}
+
+static void
+handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -780,7 +703,6 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_RECIPES;
-	data.user = user;
 	data.posts = db_post_list(p, dbid, STMT_RECIPE_LIST);
 
 	open_response(r, KHTTP_200);
@@ -789,122 +711,40 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_get_new_recipe(struct kreq *r)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_NEW_RECIPE;
 
-
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *title, *slug, *snippet, *content;
-
-		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
-		    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
-		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
-		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
-
-		db_post_new(p, dbid, STMT_RECIPE_NEW, title->val, slug->val, snippet->val, content->val);
-
-		open_head(r, KHTTP_302);
-		khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
-		khttp_body(r);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_NEW_RECIPE;
-		data.user = user;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_newrecipe_data, tmpl_newrecipe_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_newrecipe_data, tmpl_newrecipe_size);
 	}
 
 static void
-handle_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
-	struct tmpl_data data;
-	struct ktemplate t;
-	struct khtmlreq hr;
+	struct kpair *title, *slug, *snippet, *content;
 
-	// Not logged in
-	if (user == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
+	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+		return send_400(r);
 
+	db_post_new(p, dbid, STMT_RECIPE_NEW, title->val, slug->val, snippet->val, content->val);
 
-	if (r->method == KMETHOD_POST)
-		{
-		struct kpair *title, *snippet, *content;
-
-		if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
-		    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
-		    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
-
-		db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->val, r->path, snippet->val, content->val);
-
-		open_head(r, KHTTP_302);
-		khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);
-		khttp_body(r);
-		}
-	else if (r->method == KMETHOD_GET)
-		{
-		struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
-		if (post == NULL)
-			{
-			open_response(r, KHTTP_404);
-			khttp_puts(r, "404 Not Found");
-			return;
-			}
-
-		memset(&data, 0, sizeof(struct tmpl_data));
-		data.page = PAGE_EDIT_RECIPE;
-		data.user = user;
-		data.post = post;
-		data.raw = 1;
-
-		open_response(r, KHTTP_200);
-		open_template(&data, &t, &hr, r);
-		khttp_template_buf(r, &t, tmpl_editrecipe_data, tmpl_editrecipe_size);
-		}
-	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
+	khttp_body(r);
 	}
 
 static void
-handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -912,15 +752,48 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 	struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
 	if (post == NULL)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+		return send_404(r);
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_EDIT_RECIPE;
+	data.post = post;
+	data.raw = 1;
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_editrecipe_data, tmpl_editrecipe_size);
+	}
+
+static void
+handle_post_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *title, *snippet, *content;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
+	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
+		return send_400(r);
+
+	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->val, r->path, snippet->val, content->val);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);
+	khttp_body(r);
+	}
+
+static void
+handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
+	if (post == NULL)
+		return send_404(r);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_RECIPE;
-	data.user = user;
 	data.post = post;
 
 	open_response(r, KHTTP_200);
@@ -958,11 +831,7 @@ handle_rooms(struct kreq *r)
 	file_length = file_slurp(buf, &data);
 
 	if (file_length == 0)
-		{
-		open_response(r, KHTTP_404);
-		khttp_puts(r, "404 Not Found");
-		return;
-		}
+		return send_404(r);
 
 	open_response(r, KHTTP_200);
 	khttp_write(r, data, file_length);
@@ -1017,11 +886,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 
 		if ((username = r->fieldmap[PARAM_USERNAME]) == NULL ||
 		    (password = r->fieldmap[PARAM_PASSWORD]) == NULL)
-			{
-			open_response(r, KHTTP_400);
-			khttp_puts(r, "400 Bad Request");
-			return;
-			}
+			return send_400(r);
 		
 		open_head(r, KHTTP_302);
 		khttp_head(r, kresps[KRESP_LOCATION], "/");
@@ -1049,10 +914,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 			}
 		}
 	else
-		{
-		open_response(r, KHTTP_405);
-		khttp_puts(r, "405 Method Not Allowed");
-		}
+		return send_405(r);
 	}
 
 static void
@@ -1118,43 +980,108 @@ main(void)
 			handle_index(&r, u);
 			break;
 		case (PAGE_IMAGES):
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
 			handle_images(&r, p, dbid, u);
 			break;
 		case (PAGE_NEW_IMAGE):
-			handle_new_image(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_new_image(&r);
+			else if (r.method == KMETHOD_POST)
+				handle_post_new_image(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_CV):
-			handle_cv(&r, p, dbid, u);
+			handle_cv(&r, p, dbid);
 			break;
 		case (PAGE_EDIT_CV):
-			handle_edit_cv(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_edit_cv(&r, p, dbid);
+			else if (r.method == KMETHOD_POST)
+				handle_post_edit_cv(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_BLOG):
-			handle_blog(&r, p, dbid, u);
+			handle_blog(&r, p, dbid);
 			break;
 		case (PAGE_POST):
-			handle_post(&r, p, dbid, u);
+			handle_post(&r, p, dbid);
 			break;
 		case (PAGE_NEW_POST):
-			handle_new_post(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_new_post(&r);
+			else if (r.method == KMETHOD_POST)
+				handle_post_new_post(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_EDIT_POST):
-			handle_edit_post(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_edit_post(&r, p, dbid);
+			else if (r.method == KMETHOD_POST)
+				handle_post_edit_post(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_COCKTAILS):
 			handle_cocktails(&r, p, dbid);
 			break;
 		case (PAGE_RECIPES):
-			handle_recipes(&r, p, dbid, u);
+			handle_recipes(&r, p, dbid);
 			break;
 		case (PAGE_RECIPE):
-			handle_recipe(&r, p, dbid, u);
+			handle_recipe(&r, p, dbid);
 			break;
 		case (PAGE_NEW_RECIPE):
-			handle_new_recipe(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_new_recipe(&r);
+			else if (r.method == KMETHOD_POST)
+				handle_post_new_recipe(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_EDIT_RECIPE):
-			handle_edit_recipe(&r, p, dbid, u);
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_edit_recipe(&r, p, dbid);
+			else if (r.method == KMETHOD_POST)
+				handle_post_edit_recipe(&r, p, dbid);
+			else
+				send_405(&r);
 			break;
 		case (PAGE_GAMES):
 			handle_games(&r);
