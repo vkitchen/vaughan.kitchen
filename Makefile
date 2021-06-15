@@ -53,14 +53,14 @@ all: main
 main: main.o $(OBJECTS) $(HEADERS)
 	$(CC) -o $@ main.o $(OBJECTS) $(LDFLAGS)
 
-templates.c: $(COMPTEMPS)
+templates.c: templates.h $(COMPTEMPS)
 
 clean:
 	rm -f main main.o $(OBJECTS) $(COMPTEMPS)
 
 upload:
-	rsync -avz --exclude='.git/' --exclude='design' --exclude='db' . deltacephei:~/vaughan.kitchen
+	rsync -avz --include='main' --include='static/***' --exclude='*' . deltacephei:~/vaughan.kitchen
 
 dev:
-	rsync -av --exclude='.git/' --exclude='design' --exclude='db' . /var/www/htdocs/vaughan.kitchen
+	rsync -av --include='main' --include='static/***' --exclude='*' . /var/www/htdocs/vaughan.kitchen
 
