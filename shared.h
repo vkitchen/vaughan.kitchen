@@ -25,4 +25,22 @@ enum param
 
 const struct kvalid params[PARAM__MAX];
 
+void
+open_head(struct kreq *r, enum khttp code);
+
+void
+open_response(struct kreq *r, enum khttp code);
+
+void
+send_400(struct kreq *r);
+
+void
+send_404(struct kreq *r);
+
+void
+send_405(struct kreq *r);
+
+void
+send_500(struct kreq *r);
+
 #endif

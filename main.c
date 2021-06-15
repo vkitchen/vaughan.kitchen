@@ -371,20 +371,6 @@ template(size_t key, void *arg)
 	return 1;
 	}
 
-static void
-open_head(struct kreq *r, enum khttp code)
-	{
-	khttp_head(r, kresps[KRESP_STATUS], "%s", khttps[code]);
-	khttp_head(r, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[KMIME_TEXT_HTML]);
-	}
-
-static void
-open_response(struct kreq *r, enum khttp code)
-	{
-	open_head(r, code);
-	khttp_body(r);
-	}
-
 // TODO: Do we want to combine this with a render function so you can't try render a non opened template?
 static void
 open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, struct kreq *r)
@@ -402,34 +388,6 @@ open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, 
 	t->keysz = KEY__MAX;
 	t->arg = (void *)data;
 	t->cb = template;
-	}
-
-static void
-send_400(struct kreq *r)
-	{
-	open_response(r, KHTTP_400);
-	khttp_puts(r, "400 Bad Request");
-	}
-
-static void
-send_404(struct kreq *r)
-	{
-	open_response(r, KHTTP_404);
-	khttp_puts(r, "404 Not Found");
-	}
-
-static void
-send_405(struct kreq *r)
-	{
-	open_response(r, KHTTP_405);
-	khttp_puts(r, "405 Method Not Allowed");
-	}
-
-static void
-send_500(struct kreq *r)
-	{
-	open_response(r, KHTTP_500);
-	khttp_puts(r, "500 Internal Server Error");
 	}
 
 static void

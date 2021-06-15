@@ -226,21 +226,6 @@ template(size_t key, void *arg)
 	return 1;
 	}
 
-// TODO merge with main
-static void
-open_head(struct kreq *r, enum khttp code)
-	{
-	khttp_head(r, kresps[KRESP_STATUS], "%s", khttps[code]);
-	khttp_head(r, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[KMIME_TEXT_HTML]);
-	}
-
-static void
-open_response(struct kreq *r, enum khttp code)
-	{
-	open_head(r, code);
-	khttp_body(r);
-	}
-
 // TODO: Do we want to combine this with a render function so you can't try render a non opened template?
 static void
 open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, struct kreq *r)
@@ -297,11 +282,7 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 	struct kpair *query;
 
 	if ((query = r->fieldmap[PARAM_QUERY]) == NULL)
-		{
-		open_response(r, KHTTP_400);
-		khttp_puts(r, "400 Bad Request");
-		return;
-		}
+		return send_400(r);
 
 	struct dynarray *cocktails = db_cocktail_list(p, dbid);
 
