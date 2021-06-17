@@ -74,7 +74,7 @@ CREATE TABLE cocktails
 CREATE TABLE cocktail_ingredients
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, name TEXT NOT NULL
-	, measure TEXT NOT NULL
+	, measure TEXT NOT NULL -- TODO should probably be INTEGER
 	, unit TEXT NOT NULL
 	, cocktail_id INTEGER NOT NULL
 	, FOREIGN KEY(cocktail_id) REFERENCES cocktails(id)

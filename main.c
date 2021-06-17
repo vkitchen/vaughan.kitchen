@@ -25,6 +25,9 @@
 #include "shared.h"
 #include "templates.h"
 
+// TODO use the parsed values of kpair instead of the raw ones
+// TODO check if fieldmap gets set when no fields are in request
+
 #define LOGFILE "vaughan.kitchen.log"
 
 enum page
@@ -1008,7 +1011,7 @@ main(void)
 				send_405(&r);
 			break;
 		case (PAGE_COCKTAILS):
-			handle_cocktails(&r, p, dbid);
+			handle_cocktails(&r, p, dbid, u);
 			break;
 		case (PAGE_RECIPES):
 			handle_recipes(&r, p, dbid);

@@ -22,6 +22,7 @@
             <input class="masthead-search-term" type="text" name="q">
           </div>
         </form>
+	@@new-cocktail-link@@
       </div>
     </nav>
     <!--START drink_list.html-->

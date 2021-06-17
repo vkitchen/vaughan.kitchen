@@ -20,6 +20,7 @@ INCBIN(tmpl_editrecipe, "tmpl/editrecipe.html");
 INCBIN(tmpl_games, "tmpl/games.html");
 INCBIN(tmpl_index, "tmpl/index.html");
 INCBIN(tmpl_login, "tmpl/login.html");
+INCBIN(tmpl_newdrink, "tmpl/newdrink.html");
 INCBIN(tmpl_newpost, "tmpl/newpost.html");
 INCBIN(tmpl_newrecipe, "tmpl/newrecipe.html");
 INCBIN(tmpl_post, "tmpl/post.html");

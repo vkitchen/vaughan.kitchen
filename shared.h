@@ -20,10 +20,14 @@ enum param
 	PARAM_SNIPPET,
 	PARAM_CONTENT,
 	PARAM_IMAGE,
+	PARAM_SERVE,
+	PARAM_GARNISH,
+	PARAM_DRINKWARE,
+	PARAM_METHOD,
 	PARAM__MAX,
 	};
 
-const struct kvalid params[PARAM__MAX];
+extern const struct kvalid params[PARAM__MAX];
 
 void
 open_head(struct kreq *r, enum khttp code);

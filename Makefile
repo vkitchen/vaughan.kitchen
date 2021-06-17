@@ -15,6 +15,7 @@ TEMPLATES = \
 	tmpl/images.m4 \
 	tmpl/index.m4 \
 	tmpl/login.m4 \
+	tmpl/newdrink.m4 \
 	tmpl/newimage.m4 \
 	tmpl/newpost.m4 \
 	tmpl/newrecipe.m4 \

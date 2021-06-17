@@ -16,6 +16,10 @@ const struct kvalid params[PARAM__MAX] =
 	{ kvalid_string, "snippet" },
 	{ kvalid_stringne, "content" },
 	{ NULL, "image" }, /* TODO is this right? What about NULL bytes */
+	{ kvalid_stringne, "serve" },
+	{ kvalid_stringne, "garnish" },
+	{ kvalid_stringne, "drinkware" },
+	{ kvalid_stringne, "method" },
 	};
 
 void

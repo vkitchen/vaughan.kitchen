@@ -62,8 +62,14 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id ORDER BY recipes.id DESC" },
 	/* STMT_COCKTAIL_GET */
 	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails WHERE slug=?" },
+	/* STMT_COCKTAIL_NEW */
+	{ .stmt = (char *)"INSERT INTO cocktails (title,slug,serve,garnish,drinkware,method) VALUES (?,?,?,?,?,?)" },
+	/* STMT_COCKTAIL_MAX */
+	{ .stmt = (char *)"SELECT MAX(id) FROM cocktails" }, // TODO INSERT RETURNING coming real soon now
 	/* STMT_COCKTAIL_LIST */
 	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails ORDER BY title ASC" },
+	/* STMT_INGREDIENT_NEW */
+	{ .stmt = (char *)"INSERT INTO cocktail_ingredients (name,measure,unit,cocktail_id) VALUES (?,?,?,?)" },
 	/* STMT_COCKTAIL_INGREDIENTS */
 	{ .stmt = (char *)"SELECT id,name,measure,unit FROM cocktail_ingredients WHERE cocktail_id=? ORDER BY id ASC" },
 	};
@@ -658,6 +664,33 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	return ingredients;
 	}
 
+void
+db_ingredient_new(struct sqlbox *p, size_t dbid, int64_t cocktail_id, char *name, char *measure, char *unit)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = name, .type = SQLBOX_PARM_STRING },
+		{ .sparm = measure, .type = SQLBOX_PARM_STRING },
+		{ .sparm = unit, .type = SQLBOX_PARM_STRING },
+		{ .iparm = cocktail_id, .type = SQLBOX_PARM_INT },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_INGREDIENT_NEW, 4, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
 static void
 cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
 	{
@@ -730,6 +763,71 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug)
 		errx(EXIT_FAILURE, "sqlbox_finalise");
 
 	return cocktail;
+	}
+
+int64_t
+db_cocktail_max(struct sqlbox *p, size_t dbid)
+	{
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_MAX, 0, NULL, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	if (res->psz == 0)
+		errx(EXIT_FAILURE, "res.zero");
+
+	// row id
+	int64_t cocktail_id;
+	scan_int(&cocktail_id, res, 0);
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return cocktail_id;
+	}
+
+void
+db_cocktail_new(struct sqlbox *p, size_t dbid, char *title, char *slug, char *serve, char *garnish, char *drinkware, char *method, struct dynarray *ingredients)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
+		{ .sparm = serve, .type = SQLBOX_PARM_STRING },
+		{ .sparm = garnish, .type = SQLBOX_PARM_STRING },
+		{ .sparm = drinkware, .type = SQLBOX_PARM_STRING },
+		{ .sparm = method, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_NEW, 6, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	int64_t cocktail_id = db_cocktail_max(p, dbid);
+
+	for (size_t i = 0; i < ingredients->length; i++)
+		{
+		struct ingredient *ingredient = ingredients->store[i];
+		db_ingredient_new(p, dbid, cocktail_id, ingredient->name, ingredient->measure, ingredient->unit);
+		}
 	}
 
 struct dynarray *

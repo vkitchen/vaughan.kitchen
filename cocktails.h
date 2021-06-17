@@ -2,9 +2,6 @@
 #define COCKTAILS_H
 
 void
-handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink);
-
-void
-handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid);
+handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user);
 
 #endif

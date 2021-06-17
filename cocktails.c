@@ -22,9 +22,9 @@ struct tmpl_data
 	{
 	struct kreq           *r;
 	struct khtmlreq       *req;
+	struct user           *user;
 	char                  *title;
 	char                  *query;
-	struct user           *user;
 	struct dynarray       *cocktails;
 	size_t                 page_no; /* pagination */
 	};
@@ -33,6 +33,7 @@ struct drink_tmpl_data
 	{
 	struct kreq           *r;
 	struct khtmlreq       *req;
+	struct user           *user;
 	struct cocktail       *cocktail;
 	};
 
@@ -40,6 +41,7 @@ enum key
 	{
 	KEY_TITLE,
 	KEY_NEXT_PAGE_LINK,
+	KEY_NEW_COCKTAIL_LINK,
 	KEY_DRINKS,
 	KEY__MAX,
 	};
@@ -48,6 +50,7 @@ static const char *keys[KEY__MAX] =
 	{
 	"title",
 	"next-page-link",
+	"new-cocktail-link",
 	"drinks",
 	};
 
@@ -76,6 +79,14 @@ const char *drink_keys[DRINK_KEY__MAX] =
 	"drink-method",
 	};
 
+// Return pointer to end of prefix in str
+char *string_prefix(char *str, char *pre)
+	{
+	while (*pre)
+		if (*pre++ != *str++)
+			return NULL;
+	return str;
+	}
 
 void
 render_ingredient(char *buf, size_t bufsize, char *name, char *measure, char *unit)
@@ -149,14 +160,15 @@ drink_template(size_t key, void *arg)
 				khtml_puts(data->req, data->cocktail->garnish);
 			break;
 		case (DRINK_KEY_INGREDIENTS):
-			for (size_t i = 0; i < data->cocktail->ingredients->length; i++)
-				{
-				khtml_elem(data->req, KELEM_LI);
-				struct ingredient *ingredient = data->cocktail->ingredients->store[i];
-				render_ingredient(buf, sizeof(buf), ingredient->name, ingredient->measure, ingredient->unit);
-				khtml_puts(data->req, buf);
-				khtml_closeelem(data->req, 1);
-				}
+			if (data->cocktail->ingredients != NULL)
+				for (size_t i = 0; i < data->cocktail->ingredients->length; i++)
+					{
+					khtml_elem(data->req, KELEM_LI);
+					struct ingredient *ingredient = data->cocktail->ingredients->store[i];
+					render_ingredient(buf, sizeof(buf), ingredient->name, ingredient->measure, ingredient->unit);
+					khtml_puts(data->req, buf);
+					khtml_closeelem(data->req, 1);
+					}
 			break;
 		case (DRINK_KEY_METHOD):
 			if (data->cocktail->method != NULL)
@@ -179,6 +191,13 @@ template(size_t key, void *arg)
 		{
 		case (KEY_TITLE):
 			khtml_puts(data->req, data->title);
+			break;
+		case (KEY_NEW_COCKTAIL_LINK):
+			if (data->user == NULL)
+				break;
+			khtml_attr(data->req, KELEM_A, KATTR_HREF, "/cocktails/drinks/new", KATTR__MAX);
+			khtml_puts(data->req, "New Cocktail");
+			khtml_closeelem(data->req, 1);
 			break;
 		case (KEY_NEXT_PAGE_LINK):
 			if ((data->page_no + 1) * 10 >= data->cocktails->length)
@@ -245,9 +264,68 @@ open_template(struct tmpl_data *data, struct ktemplate *t, struct khtmlreq *hr, 
 	t->cb = template;
 	}
 	
+void
+handle_get_new_drink(struct kreq *r)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.title = "New Drink";
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+
+	khttp_template_buf(r, &t, tmpl_newdrink_data, tmpl_newdrink_size);
+	}
+
+static void
+handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *title, *slug, *serve, *garnish, *drinkware, *method;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
+	    (serve = r->fieldmap[PARAM_SERVE]) == NULL ||
+	    (garnish = r->fieldmap[PARAM_GARNISH]) == NULL ||
+	    (drinkware = r->fieldmap[PARAM_DRINKWARE]) == NULL ||
+	    (method = r->fieldmap[PARAM_METHOD]) == NULL)
+		return send_400(r);
+
+	struct dynarray *ingredients = dynarray_new(NULL);
+	char *name = NULL, *measure = NULL, *unit = NULL;
+	for (size_t i = 0; i < r->fieldsz; i++)
+		{
+		// TODO do we need to validate any of this?
+		// TODO memory leak if maliciously constructed data
+		if (strcmp(r->fields[i].key, "ingredient_name") == 0 && r->fields[i].val[0] != '\0')
+			name = kstrdup(r->fields[i].val);
+		if (strcmp(r->fields[i].key, "ingredient_measure") == 0 && r->fields[i].val[0] != '\0')
+			measure = kstrdup(r->fields[i].val);
+		if (strcmp(r->fields[i].key, "ingredient_unit") == 0 && r->fields[i].val[0] != '\0')
+			unit = kstrdup(r->fields[i].val);
+		if (name != NULL && measure != NULL && unit != NULL)
+			{
+			struct ingredient *ingredient = kmalloc(sizeof(struct ingredient));
+			ingredient->name = name;
+			name = NULL;
+			ingredient->measure = measure;
+			measure = NULL;
+			ingredient->unit = unit;
+			unit = NULL;
+			dynarray_append(ingredients, ingredient);
+			}
+		}
+
+	db_cocktail_new(p, dbid, title->val, slug->val, serve->val, garnish->val, drinkware->val, method->val, ingredients);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails");
+	}
 
 void
-handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
+handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink, struct user *user)
 	{
 	struct drink_tmpl_data data;
 	struct ktemplate t;
@@ -261,6 +339,7 @@ handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
 
 	data.r = r;
 	data.req = &hr;
+	data.user = user;
 	data.cocktail = db_cocktail_get(p, dbid, drink);
 
 	t.key = drink_keys;
@@ -273,7 +352,7 @@ handle_cocktail(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
 	}
 
 void
-handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_search(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -287,6 +366,7 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 	struct dynarray *cocktails = db_cocktail_list(p, dbid);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.user = user;
 	data.title = "Search Results";
 	data.query = query->val;
 	data.cocktails = cocktails;
@@ -322,21 +402,34 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 void
-handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	char *path;
 
-	// TODO prefix instead of strstr
-	char *drink;
-	if ((drink = strstr(r->path, "drinks/")) != NULL)
-		return handle_cocktail(r, p, dbid, &r->path[strlen("drinks/")]);
+	if (string_prefix(r->path, "drinks/new") != NULL)
+		{
+		if (user == NULL)
+			send_404(r);
+		if (r->method == KMETHOD_GET)
+			handle_get_new_drink(r);
+		else if (r->method == KMETHOD_POST)
+			handle_post_new_drink(r, p, dbid);
+		else
+			send_405(r);
+		return;
+		}
 
-	if (strstr(r->path, "search") != NULL)
-		return handle_search(r, p, dbid);
+	if ((path = string_prefix(r->path, "drinks/")) != NULL)
+		return handle_cocktail(r, p, dbid, path, user);
+
+	if (string_prefix(r->path, "search") != NULL)
+		return handle_search(r, p, dbid, user);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
+	data.user = user;
 	data.title = "All Drinks";
 	data.cocktails = db_cocktail_list(p, dbid);
 

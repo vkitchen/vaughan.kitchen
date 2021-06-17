@@ -23,12 +23,15 @@ enum stmt
 	STMT_RECIPE_UPDATE,
 	STMT_RECIPE_LIST,
 	STMT_COCKTAIL_GET,
+	STMT_COCKTAIL_NEW,
+	STMT_COCKTAIL_MAX,
 	STMT_COCKTAIL_LIST,
+	STMT_INGREDIENT_NEW,
 	STMT_COCKTAIL_INGREDIENTS,
 	STMT__MAX,
 	};
 
-struct sqlbox_pstmt pstmts[STMT__MAX];
+extern struct sqlbox_pstmt pstmts[STMT__MAX];
 
 struct user
 	{
@@ -131,6 +134,9 @@ db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res);
 
 struct cocktail *
 db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug);
+
+void
+db_cocktail_new(struct sqlbox *p, size_t dbid, char *title, char *slug, char *serve, char *garnish, char *drinkware, char *method, struct dynarray *ingredients);
 
 struct dynarray *
 db_cocktail_list(struct sqlbox *p, size_t dbid);
