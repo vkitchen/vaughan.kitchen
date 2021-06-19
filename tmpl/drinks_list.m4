@@ -1,45 +1,18 @@
-<!--START page.html-->
-<!DOCTYPE HTML>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>@@title@@ - Vaughan.Kitchen</title>
-  <link rel="stylesheet" type="text/css" href="/static/css/cocktails.css">
-</head>
-<body>
-  <!--START frame.html-->
-  <div class="page-frame">
-    <nav class="masthead-container">
-      <div class="logo-container">
-        <a class="logo" href="/">VK</a>
-      </div>
-      <div>
-        <form class="masthead-search" action="/cocktails/search" method="get">
-          <button class="search-btn">
-            <span class="material-icons search-btn-icon">search</span>
-          </button>
-          <div class="masthead-search-terms">
-            <input class="masthead-search-term" type="text" name="q">
-          </div>
-        </form>
+include(`tmpl/partials/doc_open.m4')
+
+<div class="page-nav">
+	<form action="/cocktails/search" method="get" class="page-nav__searchbox">
+		<input type="text" name="q">
+		<button>search</button>
+	</form>
 	@@new-cocktail-link@@
-      </div>
-    </nav>
-    <!--START drink_list.html-->
-    <div class="content">
-      <div class="content-inner">
-        <div class="content-title">
-          <h3>@@title@@</h3>
-        </div>
-        <ul class="drinks-list">
-          @@drinks@@
-        </ul>
-        @@next-page-link@@
-      </div>
-    </div>
-    <!--END drink_list.html-->
-  </div>
-  <!--END frame.html-->
-</body>
-</html>
-<!--END page.html-->
+</div>
+
+<main>
+	<h3>@@title@@</h3>
+	<ul class="drinks-list">
+		@@drinks@@
+	</ul>
+	@@next-page-link@@
+</main>
+include(`tmpl/partials/doc_close.m4')

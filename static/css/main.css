@@ -67,7 +67,17 @@ ul.nav {
 	text-decoration: underline;
 }
 
-/* main */
+/* page */
+
+.page-nav {
+	background-color: #255C99;
+	margin-top: 24px;
+	padding: 8px;
+}
+
+.page-nav__searchbox {
+	margin: 16px;
+}
 
 main {
 	background-color: #255C99;
@@ -75,3 +85,37 @@ main {
 	margin-top: 24px;
 	padding: 16px;
 }
+
+/* drink */
+
+.drinks-list > *+* {
+	margin-top: 24px;
+}
+
+.drink {
+	list-style: none;
+}
+
+.drink__img {
+	display: inline-block;
+	text-align: center;
+	width: 200px;
+}
+
+.drink__img img {
+	height: 200px;
+}
+
+.drink__recipe-link {}
+
+.drink__recipe {
+	display: inline-block;
+	margin-left: 16px;
+	vertical-align: top;
+}
+
+.drink__recipe h3 {
+	margin: 0;
+}
+
+.ingredients-list {}

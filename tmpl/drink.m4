@@ -1,54 +1,29 @@
-<!--START page.html-->
-<!DOCTYPE HTML>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>@@drink-title@@ - Vaughan.Kitchen</title>
-  <link rel="stylesheet" type="text/css" href="/static/css/cocktails.css">
-</head>
-<body>
-  <!--START frame.html-->
-  <div class="page-frame">
-    <nav class="masthead-container">
-      <div class="logo-container">
-        <a class="logo" href="/">VK</a>
-      </div>
-      <div>
-        <form class="masthead-search" action="/cocktails/search" method="get">
-          <button class="search-btn">
-            <span class="material-icons search-btn-icon">search</span>
-          </button>
-          <div class="masthead-search-terms">
-            <input class="masthead-search-term" type="text" name="q">
-          </div>
-        </form>
-      </div>
-    </nav>
-    <!--START drink.html-->
-    <div class="content">
-      <div class="content-inner">
-        <div class="content-title">
-          <h3>@@drink-title@@</h3>
-        </div>
-        <div class="drink">
-          <div class="drink-img">
-            <img src="@@drink-img@@">
-          </div>
-          <div class="recipe">
-            <p>Drinkware: @@drink-drinkware@@</p>
-            <p>Serve: @@drink-serve@@</p>
-            <p>Garnish: @@drink-garnish@@</p>
-            <ul>
-               @@drink-ingredients@@
-            </ul>
-            <p>@@drink-method@@</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!--END drink.html-->
-  </div>
-  <!--END frame.html-->
-</body>
-</html>
-<!--END page.html-->
+include(`tmpl/partials/doc_open.m4')
+
+<div class="page-nav">
+	<form action="/cocktails/search" method="get" class="page-nav__searchbox">
+		<input type="text" name="q">
+		<button>search</button>
+	</form>
+	@@new-cocktail-link@@
+</div>
+
+<main>
+	<h3>@@drink-title@@</h3>
+	<div class="drink__img">
+		<a href="@@drink-href@@" class="drink__recipe-link">
+			<img src="@@drink-img@@">
+		</a>
+	</div><!--
+	--><div class="drink__recipe">
+		<p>Drinkware: @@drink-drinkware@@</p>
+		<p>Serve: @@drink-serve@@</p>
+		<p>Garnish: @@drink-garnish@@</p>
+		<ul class="ingredients-list">
+			@@drink-ingredients@@
+		</ul>
+		<p>@@drink-method@@</p>
+	</div>
+</main>
+
+include(`tmpl/partials/doc_close.m4')

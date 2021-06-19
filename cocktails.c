@@ -39,6 +39,8 @@ struct drink_tmpl_data
 
 enum key
 	{
+	KEY_LOGIN_LOGOUT_LINK,
+	KEY_IMAGES_LINK,
 	KEY_TITLE,
 	KEY_NEXT_PAGE_LINK,
 	KEY_NEW_COCKTAIL_LINK,
@@ -48,6 +50,8 @@ enum key
 
 static const char *keys[KEY__MAX] =
 	{
+	"login-logout-link",
+	"images-link",
 	"title",
 	"next-page-link",
 	"new-cocktail-link",
@@ -56,6 +60,9 @@ static const char *keys[KEY__MAX] =
 
 enum drink_key
 	{
+	DRINK_KEY_LOGIN_LOGOUT_LINK,
+	DRINK_KEY_IMAGES_LINK,
+	DRINK_KEY_NEW_COCKTAIL_LINK,
 	DRINK_KEY_TITLE,
 	DRINK_KEY_HREF,
 	DRINK_KEY_IMG,
@@ -69,6 +76,9 @@ enum drink_key
 
 const char *drink_keys[DRINK_KEY__MAX] =
 	{
+	"login-logout-link",
+	"images-link",
+	"new-cocktail-link",
 	"drink-title",
 	"drink-href",
 	"drink-img",
@@ -131,6 +141,36 @@ drink_template(size_t key, void *arg)
 
 	switch (key)
 		{
+		case (DRINK_KEY_LOGIN_LOGOUT_LINK):
+			if (data->user == NULL)
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/login", KATTR__MAX);
+				khtml_puts(data->req, "Login");
+				khtml_closeelem(data->req, 1);
+				}
+			else
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/logout", KATTR__MAX);
+				khtml_puts(data->req, "Logout");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (DRINK_KEY_IMAGES_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_LI);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/images", KATTR__MAX);
+				khtml_puts(data->req, "Images");
+				khtml_closeelem(data->req, 2);
+				}
+			break;
+		case (DRINK_KEY_NEW_COCKTAIL_LINK):
+			if (data->user == NULL)
+				break;
+			khtml_attr(data->req, KELEM_A, KATTR_HREF, "/cocktails/drinks/new", KATTR__MAX);
+			khtml_puts(data->req, "New Cocktail");
+			khtml_closeelem(data->req, 1);
+			break;
 		case (DRINK_KEY_TITLE):
 			khtml_puts(data->req, data->cocktail->title);
 			break;
@@ -189,6 +229,29 @@ template(size_t key, void *arg)
 
 	switch (key)
 		{
+		case (KEY_LOGIN_LOGOUT_LINK):
+			if (data->user == NULL)
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/login", KATTR__MAX);
+				khtml_puts(data->req, "Login");
+				khtml_closeelem(data->req, 1);
+				}
+			else
+				{
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/logout", KATTR__MAX);
+				khtml_puts(data->req, "Logout");
+				khtml_closeelem(data->req, 1);
+				}
+			break;
+		case (KEY_IMAGES_LINK):
+			if (data->user != NULL)
+				{
+				khtml_elem(data->req, KELEM_LI);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, "/images", KATTR__MAX);
+				khtml_puts(data->req, "Images");
+				khtml_closeelem(data->req, 2);
+				}
+			break;
 		case (KEY_TITLE):
 			khtml_puts(data->req, data->title);
 			break;
