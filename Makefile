@@ -43,7 +43,7 @@ OBJECTS = $(SRC:.c=.o)
 
 .SUFFIXES: .m4 .html .c .o
 
-.m4.html:
+.m4.html: tmpl/partials/doc_open.m4 tmpl/partials/doc_close.m4
 	m4 $< > $@
 
 .c.o: $(HEADERS)
