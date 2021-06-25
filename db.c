@@ -41,7 +41,7 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	/* STMT_IMAGE_NEW */
 	{ .stmt = (char *)"INSERT INTO images (title,alt,attribution,hash,format) VALUES (?,?,?,?,?)" },
 	/* STMT_IMAGE_UPDATE */
-	{ .stmt = (char *)"UPDATE images set title=?,alt=?,attribution=? WHERE hash=?" },
+	{ .stmt = (char *)"UPDATE images set title=?,alt=?,attribution=? WHERE hash=?" }, // TODO add mtime
 	/* STMT_IMAGE_LIST */
 	{ .stmt = (char *)"SELECT id,title,alt,attribution,ctime,hash,format FROM images ORDER BY id ASC" },
 	/* STMT_PAGE_GET */
@@ -68,6 +68,8 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails WHERE slug=?" },
 	/* STMT_COCKTAIL_NEW */
 	{ .stmt = (char *)"INSERT INTO cocktails (title,slug,serve,garnish,drinkware,method) VALUES (?,?,?,?,?,?)" },
+	/* STMT_COCKTAIL_UPDATE */
+	{ .stmt = (char *)"UPDATE cocktails SET title=?,mtime=?,serve=?,garnish=?,drinkware=?,method=? WHERE slug=?" },
 	/* STMT_COCKTAIL_MAX */
 	{ .stmt = (char *)"SELECT MAX(id) FROM cocktails" }, // TODO INSERT RETURNING coming real soon now
 	/* STMT_COCKTAIL_LIST */
@@ -867,6 +869,38 @@ db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *sl
 		struct ingredient *ingredient = ingredients->store[i];
 		db_ingredient_new(p, dbid, cocktail_id, ingredient->name, ingredient->measure, ingredient->unit);
 		}
+	}
+
+void
+db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, const char *serve, const char *garnish, const char *drinkware, const char *method)
+	{
+	time_t mtime = time(NULL);
+
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
+		{ .sparm = serve, .type = SQLBOX_PARM_STRING },
+		{ .sparm = garnish, .type = SQLBOX_PARM_STRING },
+		{ .sparm = drinkware, .type = SQLBOX_PARM_STRING },
+		{ .sparm = method, .type = SQLBOX_PARM_STRING },
+		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_UPDATE, 7, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
 	}
 
 void

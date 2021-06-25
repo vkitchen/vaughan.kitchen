@@ -23,6 +23,7 @@ INCBIN_EXTERN(tmpl_games);
 INCBIN_EXTERN(tmpl_index);
 INCBIN_EXTERN(tmpl_login);
 INCBIN_EXTERN(tmpl_newdrink);
+INCBIN_EXTERN(tmpl_editdrink);
 INCBIN_EXTERN(tmpl_newpost);
 INCBIN_EXTERN(tmpl_newrecipe);
 INCBIN_EXTERN(tmpl_post);

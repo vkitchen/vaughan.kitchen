@@ -26,6 +26,7 @@ enum stmt
 	STMT_RECIPE_LIST,
 	STMT_COCKTAIL_GET,
 	STMT_COCKTAIL_NEW,
+	STMT_COCKTAIL_UPDATE,
 	STMT_COCKTAIL_MAX,
 	STMT_COCKTAIL_LIST,
 	STMT_INGREDIENT_NEW,
@@ -168,6 +169,9 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, const char *slug);
 
 void
 db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *serve, const char *garnish, const char *drinkware, const char *method, struct dynarray *ingredients);
+
+void
+db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, const char *serve, const char *garnish, const char *drinkware, const char *method);
 
 void
 db_cocktail_list(struct sqlbox *p, size_t dbid, struct dynarray *result);

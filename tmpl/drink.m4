@@ -9,6 +9,7 @@ include(`tmpl/partials/doc_open.m4')
 </div>
 
 <main>
+	@@edit-cocktail-link@@
 	<h3>@@drink-title@@</h3>
 	<div class="drink__img">
 		<a href="@@drink-href@@" class="drink__recipe-link">

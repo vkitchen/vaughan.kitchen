@@ -18,6 +18,8 @@
 #include "shared.h"
 #include "templates.h"
 
+// TODO make use of khtml_printf
+
 struct tmpl_data
 	{
 	struct kreq           *r;
@@ -63,6 +65,8 @@ enum drink_key
 	DRINK_KEY_LOGIN_LOGOUT_LINK,
 	DRINK_KEY_IMAGES_LINK,
 	DRINK_KEY_NEW_COCKTAIL_LINK,
+	DRINK_KEY_EDIT_COCKTAIL_LINK,
+	DRINK_KEY_EDIT_COCKTAIL_PATH,
 	DRINK_KEY_TITLE,
 	DRINK_KEY_HREF,
 	DRINK_KEY_IMG,
@@ -79,6 +83,8 @@ const char *drink_keys[DRINK_KEY__MAX] =
 	"login-logout-link",
 	"images-link",
 	"new-cocktail-link",
+	"edit-cocktail-link",
+	"edit-cocktail-path",
 	"drink-title",
 	"drink-href",
 	"drink-img",
@@ -170,6 +176,20 @@ drink_template(size_t key, void *arg)
 			khtml_attr(data->req, KELEM_A, KATTR_HREF, "/cocktails/drinks/new", KATTR__MAX);
 			khtml_puts(data->req, "New Cocktail");
 			khtml_closeelem(data->req, 1);
+			break;
+		case (DRINK_KEY_EDIT_COCKTAIL_LINK):
+			if (data->user == NULL)
+				break;
+			snprintf(buf, sizeof(buf), "/cocktails/drinks/edit/%s", data->cocktail->slug);
+			khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+			khtml_puts(data->req, "Edit Cocktail");
+			khtml_closeelem(data->req, 1);
+			break;
+		case (DRINK_KEY_EDIT_COCKTAIL_PATH):
+			if (data->user == NULL)
+				break;
+			snprintf(buf, sizeof(buf), "/cocktails/drinks/edit/%s", data->cocktail->slug);
+			khtml_puts(data->req, buf);
 			break;
 		case (DRINK_KEY_TITLE):
 			khtml_puts(data->req, data->cocktail->title);
@@ -386,6 +406,53 @@ handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails");
+	khttp_body(r);
+	}
+
+void
+handle_get_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink, struct user *user)
+	{
+	struct drink_tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	memset(&t, 0, sizeof(struct ktemplate));
+	memset(&hr, 0, sizeof(struct khtmlreq));
+
+	if (khtml_open(&hr, r, 0) != KCGI_OK)
+		errx(EXIT_FAILURE, "khtml_open");
+
+	data.r = r;
+	data.req = &hr;
+	data.user = user;
+	data.cocktail = db_cocktail_get(p, dbid, drink);
+
+	t.key = drink_keys;
+	t.keysz = DRINK_KEY__MAX;
+	t.arg = (void *)&data;
+	t.cb = drink_template;
+
+	open_response(r, KHTTP_200);
+	khttp_template_buf(r, &t, tmpl_editdrink_data, tmpl_editdrink_size);
+	}
+
+static void
+handle_post_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
+	{
+	struct kpair *title, *serve, *garnish, *drinkware, *method;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (serve = r->fieldmap[PARAM_SERVE]) == NULL ||
+	    (garnish = r->fieldmap[PARAM_GARNISH]) == NULL ||
+	    (drinkware = r->fieldmap[PARAM_DRINKWARE]) == NULL ||
+	    (method = r->fieldmap[PARAM_METHOD]) == NULL)
+		return send_400(r);
+
+	db_cocktail_update(p, dbid, drink, title->parsed.s, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails/drinks/%s", drink);
+	khttp_body(r);
 	}
 
 void
@@ -485,6 +552,19 @@ handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 			handle_get_new_drink(r);
 		else if (r->method == KMETHOD_POST)
 			handle_post_new_drink(r, p, dbid);
+		else
+			send_405(r);
+		return;
+		}
+
+	if ((path = string_prefix(r->path, "drinks/edit/")) != NULL)
+		{
+		if (user == NULL)
+			send_404(r);
+		if (r->method == KMETHOD_GET)
+			handle_get_edit_drink(r, p, dbid, path, user);
+		else if (r->method == KMETHOD_POST)
+			handle_post_edit_drink(r, p, dbid, path);
 		else
 			send_405(r);
 		return;
