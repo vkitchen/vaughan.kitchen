@@ -11,14 +11,13 @@
 #include <inttypes.h> /* PRId64 */
 #include <time.h> /* time */
 #include <sys/queue.h> /* dep of lowdown */
-#include <netinet/in.h> /* dep of resolv.h */
-#include <resolv.h> /* b64_ntop */
 #include <md5.h>
 #include <lowdown.h>
 #include <sqlbox.h>
 #include <kcgi.h>
 #include <kcgihtml.h>
 
+#include "base64.h"
 #include "db.h"
 #include "dynarray.h"
 #include "cocktails.h"
@@ -450,7 +449,6 @@ handle_post_new_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
 	char buf[2048];
 	MD5_CTX md5;
-	char hash[MD5_DIGEST_STRING_LENGTH + 1];
 	u_char digest[MD5_DIGEST_STRING_LENGTH + 1];
 
 	struct kpair *title, *alt, *attribution, *image;
@@ -461,35 +459,25 @@ handle_post_new_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (image = r->fieldmap[PARAM_IMAGE]) == NULL)
 		return send_400(r);
 
-	// TODO md5 image. Save image. Save md5 in DB
 	// TODO check jpg is valid
 	// TODO remove EXIF
 
 	MD5Init(&md5);
 	MD5Update(&md5, image->val, image->valsz);
 	MD5Final(digest, &md5);
-	if (b64_ntop(digest, MD5_DIGEST_LENGTH, hash, sizeof(hash)) == -1)
+	char *hash;
+	if ((hash = base64buf_url(digest, MD5_DIGEST_LENGTH)) == NULL)
 		errx(1, "error encoding base64");
-
-	// TODO this seems a bit naughty
-	size_t len = strlen(hash);
-	if (hash[len-1] == '=')
-		hash[len-1] = '\0';
-	if (hash[len-2] == '=')
-		hash[len-2] = '\0';
 
 	db_image_new(p, dbid, title->val, alt->val, attribution->val, hash, "jpg");
 
-	// now actually write the image
-	// TODO check request size (httpd already does some of that for us)
+	// TODO delete DB entry if write fails
 	snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
 	file_spurt(buf, image->val, image->valsz);
 
-	// open_head(r, KHTTP_302);
-	// khttp_head(r, kresps[KRESP_LOCATION], "/images");
-	// khttp_body(r);
-	open_response(r, KHTTP_200);
-	khttp_printf(r, "Size: %zd", image->valsz);
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/images");
+	khttp_body(r);
 	}
 
 static void

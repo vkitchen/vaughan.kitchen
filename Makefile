@@ -26,6 +26,7 @@ TEMPLATES = \
 COMPTEMPS = $(TEMPLATES:.m4=.html)
 
 HEADERS = \
+	base64.h \
 	cocktails.h \
 	db.h \
 	dynarray.h \
@@ -33,6 +34,7 @@ HEADERS = \
 	templates.h
 
 SRC = \
+	base64.c \
 	cocktails.c \
 	db.c \
 	dynarray.c \
