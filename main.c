@@ -324,8 +324,11 @@ template(size_t key, void *arg)
 					if (((struct post *)data->posts->store[i])->image != NULL)
 						{
 						khtml_elem(data->req, KELEM_BR);
+						// href still in buf
+						khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 						snprintf(buf, sizeof(buf), "/static/img/%s.jpg", ((struct post *)data->posts->store[i])->image);
 						khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "200", KATTR__MAX);
+						khtml_closeelem(data->req, 1); /* </a> */
 						}
 					khtml_closeelem(data->req, 1);
 					}
