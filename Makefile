@@ -30,6 +30,7 @@ HEADERS = \
 	cocktails.h \
 	db.h \
 	dynarray.h \
+	file.h \
 	shared.h \
 	templates.h
 
@@ -38,6 +39,7 @@ SRC = \
 	cocktails.c \
 	db.c \
 	dynarray.c \
+	file.c \
 	shared.c \
 	templates.c
 
