@@ -383,15 +383,19 @@ handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray images;
 
 	// Not logged in
 	if (user == NULL)
 		return send_404(r);
 
+	dynarray_init(&images);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_IMAGES;
 	data.user = user;
-	data.images = db_image_list(p, dbid);
+	data.images = &images;
+
+	db_image_list(p, dbid, &images);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -512,10 +516,14 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid)
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray posts;
 
+	dynarray_init(&posts);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_BLOG;
-	data.posts = db_post_list(p, dbid, STMT_POST_LIST);
+	data.posts = &posts;
+
+	db_post_list(p, dbid, STMT_POST_LIST, &posts);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -619,10 +627,14 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid)
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray posts;
 
+	dynarray_init(&posts);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_RECIPES;
-	data.posts = db_post_list(p, dbid, STMT_RECIPE_LIST);
+	data.posts = &posts;
+
+	db_post_list(p, dbid, STMT_RECIPE_LIST, &posts);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);

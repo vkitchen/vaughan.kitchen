@@ -8,11 +8,10 @@ struct dynarray
 	size_t capacity;
 	size_t length;
 	void **store;
-	void (*destructor)(void *);
 	};
 
-struct dynarray *
-dynarray_new(void (*destructor)(void *));
+void
+dynarray_init(struct dynarray *a);
 
 void
 dynarray_append(struct dynarray *a, void *val);

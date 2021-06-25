@@ -33,6 +33,10 @@ enum stmt
 
 extern struct sqlbox_pstmt pstmts[STMT__MAX];
 
+/*********/
+/* TYPES */
+/*********/
+
 struct user
 	{
 	int64_t    id;
@@ -86,6 +90,25 @@ struct cocktail
 	struct dynarray         *ingredients;
 	};
 
+void
+user_free(struct user *u);
+
+void
+image_free(struct image *i);
+
+void
+post_free(struct post *p);
+
+void
+ingredient_free(struct ingredient *i);
+
+void
+cocktail_free(struct cocktail *c);
+
+/**********/
+/* SHARED */
+/**********/
+
 struct user *
 db_user_checkpass(struct sqlbox *p, size_t dbid, const char *username, const char *password);
 
@@ -101,8 +124,8 @@ db_sess_del(struct sqlbox *p, size_t dbid, int64_t cookie);
 void
 db_image_new(struct sqlbox *p, size_t dbid, const char *title, const char *alt, const char *attribution, const char *hash, const char *format);
 
-struct dynarray *
-db_image_list(struct sqlbox *p, size_t dbid);
+void
+db_image_list(struct sqlbox *p, size_t dbid, struct dynarray *result);
 
 struct post *
 db_page_get(struct sqlbox *p, size_t dbid, const char *page);
@@ -110,8 +133,8 @@ db_page_get(struct sqlbox *p, size_t dbid, const char *page);
 void
 db_page_update(struct sqlbox *p, size_t dbid, const char *page, const char *content);
 
-struct dynarray *
-db_post_list(struct sqlbox *p, size_t dbid, size_t stmt);
+void
+db_post_list(struct sqlbox *p, size_t dbid, size_t stmt, struct dynarray *result);
 
 struct post *
 db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug);
@@ -126,8 +149,8 @@ db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, co
 /* COCKTAILS */
 /*************/
 
-struct dynarray *
-db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id);
+void
+db_ingredients_get(struct sqlbox *p, size_t dbid, struct dynarray *result, int64_t cocktail_id);
 
 void
 db_cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res);
@@ -138,7 +161,7 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, const char *slug);
 void
 db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *serve, const char *garnish, const char *drinkware, const char *method, struct dynarray *ingredients);
 
-struct dynarray *
-db_cocktail_list(struct sqlbox *p, size_t dbid);
+void
+db_cocktail_list(struct sqlbox *p, size_t dbid, struct dynarray *result);
 
 #endif

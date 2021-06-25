@@ -346,6 +346,7 @@ handle_get_new_drink(struct kreq *r)
 static void
 handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
+	struct dynarray ingredients;
 	struct kpair *title, *slug, *serve, *garnish, *drinkware, *method;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
@@ -356,7 +357,7 @@ handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (method = r->fieldmap[PARAM_METHOD]) == NULL)
 		return send_400(r);
 
-	struct dynarray *ingredients = dynarray_new(NULL);
+	dynarray_init(&ingredients);
 	char *name = NULL, *measure = NULL, *unit = NULL;
 	for (size_t i = 0; i < r->fieldsz; i++)
 		{
@@ -377,11 +378,11 @@ handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
 			measure = NULL;
 			ingredient->unit = unit;
 			unit = NULL;
-			dynarray_append(ingredients, ingredient);
+			dynarray_append(&ingredients, ingredient);
 			}
 		}
 
-	db_cocktail_new(p, dbid, title->parsed.s, slug->parsed.s, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s, ingredients);
+	db_cocktail_new(p, dbid, title->parsed.s, slug->parsed.s, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s, &ingredients);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails");
@@ -420,30 +421,33 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray cocktails;
 
 	struct kpair *query;
 
 	if ((query = r->fieldmap[PARAM_QUERY]) == NULL)
 		return send_400(r);
 
-	struct dynarray *cocktails = db_cocktail_list(p, dbid);
+	dynarray_init(&cocktails);
+	db_cocktail_list(p, dbid, &cocktails);
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.user = user;
 	data.title = "Search Results";
 	data.query = query->val;
-	data.cocktails = cocktails;
+	data.cocktails = &cocktails;
 
 	struct kpair *page;
 	if ((page = r->fieldmap[PARAM_PAGE]) != NULL)
 		data.page_no = page->parsed.i;
 
-	size_t length = cocktails->length;
-	cocktails->length = 0; /* "blank" array */
+	// TODO replace with a second array so that we can dealloc easily
+	size_t length = cocktails.length;
+	cocktails.length = 0; /* "blank" array */
 	for (size_t i = 0; i < length; i++)
 		{
 		int found = 0;
-		struct cocktail *cocktail = cocktails->store[i];
+		struct cocktail *cocktail = cocktails.store[i];
 		if (strcasestr(cocktail->title, query->parsed.s) != NULL)
 			found = 1;
 
@@ -456,7 +460,7 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 					}
 
 		if (found)
-			dynarray_append(cocktails, cocktails->store[i]);
+			dynarray_append(&cocktails, cocktails.store[i]);
 		}
 
 	open_response(r, KHTTP_200);
@@ -470,6 +474,7 @@ handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 	struct tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray cocktails;
 	char *path;
 
 	if (string_prefix(r->path, "drinks/new") != NULL)
@@ -491,10 +496,13 @@ handle_cocktails(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *use
 	if (string_prefix(r->path, "search") != NULL)
 		return handle_search(r, p, dbid, user);
 
+	dynarray_init(&cocktails);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.user = user;
 	data.title = "All Drinks";
-	data.cocktails = db_cocktail_list(p, dbid);
+	data.cocktails = &cocktails;
+
+	db_cocktail_list(p, dbid, &cocktails);
 
 	struct kpair *page;
 	if ((page = r->fieldmap[PARAM_PAGE]) != NULL)

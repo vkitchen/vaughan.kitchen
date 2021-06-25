@@ -106,7 +106,7 @@ user_fill(struct user *user, const struct sqlbox_parmset *res)
 	scan_string(&user->username, res, i++);
 	}
 
-static void
+void
 user_free(struct user *u)
 	{
 	if (u == NULL)
@@ -298,7 +298,7 @@ image_fill(struct image *image, const struct sqlbox_parmset *res)
 	scan_string(&image->format, res, i++);
 	}
 
-static void
+void
 image_free(struct image *i)
 	{
 	if (i == NULL)
@@ -311,14 +311,12 @@ image_free(struct image *i)
 	free(i);
 	}
 
-struct dynarray *
-db_image_list(struct sqlbox *p, size_t dbid)
+void
+db_image_list(struct sqlbox *p, size_t dbid, struct dynarray *result)
 	{
 	size_t stmtid;
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_LIST, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct dynarray *images = dynarray_new((void (*)(void *))&image_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -337,21 +335,12 @@ db_image_list(struct sqlbox *p, size_t dbid)
 		memset(image, 0, sizeof(struct image));
 		image_fill(image, res);
 
-		dynarray_append(images, image);
-		}
-
-	// no results
-	if (images->length == 0)
-		{
-		dynarray_free(images);
-		images = NULL;
+		dynarray_append(result, image);
 		}
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
 		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return images;
 	}
 
 static void
@@ -368,7 +357,7 @@ post_fill(struct post *post, const struct sqlbox_parmset *res)
 	scan_string(&post->image, res, i++);
 	}
 
-static void
+void
 post_free(struct post *p)
 	{
 	if (p == NULL)
@@ -452,14 +441,12 @@ db_page_update(struct sqlbox *p, size_t dbid, const char *page, const char *cont
 	}
 
 // TODO restrict statements
-struct dynarray *
-db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
+void
+db_post_list(struct sqlbox *p, size_t dbid, size_t stmt, struct dynarray *result)
 	{
 	size_t stmtid;
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct dynarray *posts = dynarray_new((void (*)(void *))&post_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -478,21 +465,12 @@ db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
 		memset(post, 0, sizeof(struct post));
 		post_fill(post, res);
 
-		dynarray_append(posts, post);
-		}
-
-	// no results
-	if (posts->length == 0)
-		{
-		dynarray_free(posts);
-		posts = NULL;
+		dynarray_append(result, post);
 		}
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
 		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return posts;
 	}
 
 struct post *
@@ -605,7 +583,7 @@ ingredient_fill(struct ingredient *ingredient, const struct sqlbox_parmset *res)
 	scan_string(&ingredient->unit, res, i++);
 	}
 
-static void
+void
 ingredient_free(struct ingredient *i)
 	{
 	if (i == NULL)
@@ -616,8 +594,8 @@ ingredient_free(struct ingredient *i)
 	free(i);
 	}
 
-struct dynarray *
-db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
+void
+db_ingredients_get(struct sqlbox *p, size_t dbid, struct dynarray *result, int64_t cocktail_id)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -627,8 +605,6 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 	size_t stmtid;
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_INGREDIENTS, 1, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct dynarray *ingredients = dynarray_new((void (*)(void *))&ingredient_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -647,21 +623,12 @@ db_ingredients_get(struct sqlbox *p, size_t dbid, int64_t cocktail_id)
 		memset(ingredient, 0, sizeof(struct ingredient));
 		ingredient_fill(ingredient, res);
 
-		dynarray_append(ingredients, ingredient);
-		}
-
-	// no results
-	if (ingredients->length == 0)
-		{
-		dynarray_free(ingredients);
-		ingredients = NULL;
+		dynarray_append(result, ingredient);
 		}
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
 		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return ingredients;
 	}
 
 void
@@ -707,7 +674,7 @@ cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
 	scan_string(&cocktail->method, res, i++);
 	}
 
-static void
+void
 cocktail_free(struct cocktail *c)
 	{
 	if (c == NULL)
@@ -719,6 +686,7 @@ cocktail_free(struct cocktail *c)
 	free(c->garnish);
 	free(c->drinkware);
 	free(c->method);
+	// TODO properly free ingredients
 	if (c->ingredients != NULL)
 		dynarray_free(c->ingredients);
 	free(c);
@@ -756,7 +724,9 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, const char *slug)
 	memset(cocktail, 0, sizeof(struct cocktail));
 
 	cocktail_fill(cocktail, res);
-	cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
+	cocktail->ingredients = kmalloc(sizeof(struct dynarray));
+	dynarray_init(cocktail->ingredients);
+	db_ingredients_get(p, dbid, cocktail->ingredients, cocktail->id);
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
@@ -830,14 +800,12 @@ db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *sl
 		}
 	}
 
-struct dynarray *
-db_cocktail_list(struct sqlbox *p, size_t dbid)
+void
+db_cocktail_list(struct sqlbox *p, size_t dbid, struct dynarray *result)
 	{
 	size_t stmtid;
 	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_LIST, 0, NULL, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	struct dynarray *cocktails = dynarray_new((void (*)(void *))&cocktail_free);
 
 	const struct sqlbox_parmset *res;
 	for (;;)
@@ -856,21 +824,15 @@ db_cocktail_list(struct sqlbox *p, size_t dbid)
 		memset(cocktail, 0, sizeof(struct cocktail));
 
 		cocktail_fill(cocktail, res);
-		cocktail->ingredients = db_ingredients_get(p, dbid, cocktail->id);
+		// TODO move into fill?
+		cocktail->ingredients = kmalloc(sizeof(struct dynarray));
+		dynarray_init(cocktail->ingredients);
+		db_ingredients_get(p, dbid, cocktail->ingredients, cocktail->id);
 
-		dynarray_append(cocktails, cocktail);
-		}
-
-	// no results
-	if (cocktails->length == 0)
-		{
-		dynarray_free(cocktails);
-		cocktails = NULL;
+		dynarray_append(result, cocktail);
 		}
 
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
 		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return cocktails;
 	}
