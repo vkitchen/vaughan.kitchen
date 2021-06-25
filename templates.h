@@ -8,6 +8,7 @@
 /* A_data, A_end, A_size */
 INCBIN_EXTERN(tmpl_images);
 INCBIN_EXTERN(tmpl_newimage);
+INCBIN_EXTERN(tmpl_editimage);
 INCBIN_EXTERN(tmpl_blog);
 INCBIN_EXTERN(tmpl_connect4);
 INCBIN_EXTERN(tmpl_chinese_chess);

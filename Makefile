@@ -9,6 +9,7 @@ TEMPLATES = \
 	tmpl/drink_snippet.m4 \
 	tmpl/drinks_list.m4 \
 	tmpl/editcv.m4 \
+	tmpl/editimage.m4 \
 	tmpl/editpost.m4 \
 	tmpl/editrecipe.m4 \
 	tmpl/games.m4 \

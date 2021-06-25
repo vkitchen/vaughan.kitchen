@@ -36,8 +36,12 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"INSERT INTO sessions (cookie,user_id) VALUES (?,?)" },
 	/* STMT_SESS_DEL */
 	{ .stmt = (char *)"DELETE FROM sessions WHERE cookie=?" },
+	/* STMT_IMAGE_GET */
+	{ .stmt = (char *)"SELECT id,title,alt,attribution,ctime,hash,format FROM images WHERE hash=?" },
 	/* STMT_IMAGE_NEW */
 	{ .stmt = (char *)"INSERT INTO images (title,alt,attribution,hash,format) VALUES (?,?,?,?,?)" },
+	/* STMT_IMAGE_UPDATE */
+	{ .stmt = (char *)"UPDATE images set title=?,alt=?,attribution=? WHERE hash=?" },
 	/* STMT_IMAGE_LIST */
 	{ .stmt = (char *)"SELECT id,title,alt,attribution,ctime,hash,format FROM images ORDER BY id ASC" },
 	/* STMT_PAGE_GET */
@@ -285,6 +289,32 @@ db_image_new(struct sqlbox *p, size_t dbid, const char *title, const char *alt, 
 		errx(EXIT_FAILURE, "sqlbox_finalise");
 	}
 
+void
+db_image_update(struct sqlbox *p, size_t dbid, const char *hash, const char *title, const char *alt, const char *attribution)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = title, .type = SQLBOX_PARM_STRING },
+		{ .sparm = alt, .type = SQLBOX_PARM_STRING },
+		{ .sparm = attribution, .type = SQLBOX_PARM_STRING },
+		{ .sparm = hash, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_UPDATE, 4, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
 static void
 image_fill(struct image *image, const struct sqlbox_parmset *res)
 	{
@@ -341,6 +371,45 @@ db_image_list(struct sqlbox *p, size_t dbid, struct dynarray *result)
 	// finalise
 	if (!sqlbox_finalise(p, stmtid))
 		errx(EXIT_FAILURE, "sqlbox_finalise");
+	}
+
+struct image *
+db_image_get(struct sqlbox *p, size_t dbid, const char *hash)
+	{
+	struct sqlbox_parm parms[] =
+		{
+		{ .sparm = hash, .type = SQLBOX_PARM_STRING },
+		};
+
+	size_t stmtid;
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_IMAGE_GET, 1, parms, 0)))
+		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
+
+	const struct sqlbox_parmset *res;
+	if ((res = sqlbox_step(p, stmtid)) == NULL)
+		errx(EXIT_FAILURE, "sqlbox_step");
+
+	if (res->code != SQLBOX_CODE_OK)
+		errx(EXIT_FAILURE, "res.code");
+
+	// no results
+	if (res->psz == 0)
+		{
+		if (!sqlbox_finalise(p, stmtid))
+			errx(EXIT_FAILURE, "sqlbox_finalise");
+
+		return NULL;
+		}
+
+	struct image *image = kmalloc(sizeof(struct image));
+	memset(image, 0, sizeof(struct image));
+	image_fill(image, res);
+
+	// finalise
+	if (!sqlbox_finalise(p, stmtid))
+		errx(EXIT_FAILURE, "sqlbox_finalise");
+
+	return image;
 	}
 
 static void

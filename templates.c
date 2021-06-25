@@ -7,6 +7,7 @@
 /* A_data, A_end, A_size */
 INCBIN(tmpl_images, "tmpl/images.html");
 INCBIN(tmpl_newimage, "tmpl/newimage.html");
+INCBIN(tmpl_editimage, "tmpl/editimage.html");
 INCBIN(tmpl_blog, "tmpl/blog.html");
 INCBIN(tmpl_connect4, "tmpl/connect4.html");
 INCBIN(tmpl_chinese_chess, "tmpl/chinese-chess.html");

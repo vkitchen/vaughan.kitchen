@@ -10,7 +10,9 @@ enum stmt
 	STMT_SESS_GET,
 	STMT_SESS_NEW,
 	STMT_SESS_DEL,
+	STMT_IMAGE_GET,
 	STMT_IMAGE_NEW,
+	STMT_IMAGE_UPDATE,
 	STMT_IMAGE_LIST,
 	STMT_PAGE_GET,
 	STMT_PAGE_UPDATE,
@@ -125,7 +127,13 @@ void
 db_image_new(struct sqlbox *p, size_t dbid, const char *title, const char *alt, const char *attribution, const char *hash, const char *format);
 
 void
+db_image_update(struct sqlbox *p, size_t dbid, const char *hash, const char *title, const char *alt, const char *attribution);
+
+void
 db_image_list(struct sqlbox *p, size_t dbid, struct dynarray *result);
+
+struct image *
+db_image_get(struct sqlbox *p, size_t dbid, const char *hash);
 
 struct post *
 db_page_get(struct sqlbox *p, size_t dbid, const char *page);

@@ -26,6 +26,7 @@
 #include "templates.h"
 
 // TODO use the parsed values of kpair instead of the raw ones
+// TODO pass user into all handlers to display header correctly
 // TODO check if fieldmap gets set when no fields are in request
 
 #define LOGFILE "vaughan.kitchen.log"
@@ -35,6 +36,7 @@ enum page
 	PAGE_INDEX,
 	PAGE_IMAGES,
 	PAGE_NEW_IMAGE,
+	PAGE_EDIT_IMAGE,
 	PAGE_CV,
 	PAGE_EDIT_CV,
 	PAGE_BLOG,
@@ -60,6 +62,7 @@ const char *const pages[PAGE__MAX] =
 	"index",
 	"images",
 	"newimage",
+	"editimage",
 	"cv",
 	"editcv",
 	"blag",
@@ -86,8 +89,12 @@ struct tmpl_data
 	enum page              page;
 	struct user           *user;
 	struct post           *post;
-	struct dynarray     *posts;
-	struct dynarray    *images;
+	struct dynarray       *posts;
+	struct dynarray       *images;
+	char                  *slug;
+	char                  *title;
+	char                  *alt;
+	char                  *attribution;
 	int                    raw; /* don't render markdown */
 	};
 
@@ -96,7 +103,10 @@ enum key
 	KEY_LOGIN_LOGOUT_LINK,
 	KEY_IMAGES_LINK,
 	KEY_NEW_IMAGE_LINK,
+	KEY_EDIT_IMAGE_PATH,
 	KEY_IMAGES,
+	KEY_ALT,
+	KEY_ATTRIBUTION,
 	KEY_EDIT_CV_LINK,
 	KEY_NEW_POST_LINK,
 	KEY_EDIT_POST_LINK,
@@ -117,7 +127,10 @@ static const char *keys[KEY__MAX] =
 	"login-logout-link",
 	"images-link",
 	"new-image-link",
+	"edit-image-path",
 	"images",
+	"alt",
+	"attribution",
 	/* post */
 	"edit-cv-link",
 	"new-post-link",
@@ -182,6 +195,19 @@ template(size_t key, void *arg)
 				khtml_closeelem(data->req, 1);
 				}
 			break;
+		case (KEY_EDIT_IMAGE_PATH):
+			if (data->user != NULL)
+				{
+				snprintf(buf, sizeof(buf), "/editimage/%s", data->slug);
+				khtml_puts(data->req, buf);
+				}
+			break;
+		case (KEY_ALT):
+			khtml_puts(data->req, data->alt);
+			break;
+		case (KEY_ATTRIBUTION):
+			khtml_puts(data->req, data->attribution);
+			break;
 		case (KEY_IMAGES):
 			if (data->user != NULL && data->images != NULL)
 				{
@@ -189,10 +215,21 @@ template(size_t key, void *arg)
 				for (size_t i = 0; i < data->images->length; i++)
 					{
 					khtml_elem(data->req, KELEM_LI);
+					// edit link
+					snprintf(buf, sizeof(buf), "/editimage/%s", ((struct image *)data->images->store[i])->hash);
+					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+					khtml_puts(data->req, "Edit");
+					khtml_closeelem(data->req, 1);
+					khtml_puts(data->req, " ");
+					// image link
 					snprintf(buf, sizeof(buf), "/static/img/%s.jpg", ((struct image *)data->images->store[i])->hash);
 					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 					khtml_puts(data->req, ((struct image *)data->images->store[i])->hash);
-					khtml_closeelem(data->req, 2);
+					khtml_closeelem(data->req, 1);
+					// name
+					khtml_puts(data->req, " ");
+					khtml_puts(data->req, ((struct image *)data->images->store[i])->title);
+					khtml_closeelem(data->req, 1); /* li */
 					}
 				khtml_closeelem(data->req, 1);
 				}
@@ -259,7 +296,10 @@ template(size_t key, void *arg)
 				}
 			break;
 		case (KEY_TITLE):
-			khtml_puts(data->req, data->post->title);
+			if (data->title != NULL)
+				khtml_puts(data->req, data->title);
+			else
+				khtml_puts(data->req, data->post->title);
 			break;
 		case (KEY_SNIPPET):
 			if (data->raw)
@@ -385,10 +425,6 @@ handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct khtmlreq hr;
 	struct dynarray images;
 
-	// Not logged in
-	if (user == NULL)
-		return send_404(r);
-
 	dynarray_init(&images);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_IMAGES;
@@ -447,6 +483,47 @@ handle_post_new_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	// TODO delete DB entry if write fails
 	snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
 	file_spurt(buf, image->val, image->valsz);
+
+	open_head(r, KHTTP_302);
+	khttp_head(r, kresps[KRESP_LOCATION], "/images");
+	khttp_body(r);
+	}
+
+static void
+handle_get_edit_image(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
+	{
+	struct tmpl_data data;
+	struct ktemplate t;
+	struct khtmlreq hr;
+
+	struct image *image = db_image_get(p, dbid, r->path);
+	if (image == NULL)
+		return send_404(r);
+
+	memset(&data, 0, sizeof(struct tmpl_data));
+	data.page = PAGE_EDIT_IMAGE;
+	data.user = user;
+	data.slug = r->path;
+	data.title = image->title;
+	data.alt = image->alt;
+	data.attribution = image->attribution;
+
+	open_response(r, KHTTP_200);
+	open_template(&data, &t, &hr, r);
+	khttp_template_buf(r, &t, tmpl_editimage_data, tmpl_editimage_size);
+	}
+
+static void
+handle_post_edit_image(struct kreq *r, struct sqlbox *p, size_t dbid)
+	{
+	struct kpair *title, *alt, *attribution;
+
+	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (alt = r->fieldmap[PARAM_ALT]) == NULL ||
+	    (attribution = r->fieldmap[PARAM_ATTRIBUTION]) == NULL)
+		return send_400(r);
+
+	db_image_update(p, dbid, r->path, title->parsed.s, alt->parsed.s, attribution->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/images");
@@ -928,6 +1005,19 @@ main(void)
 				handle_get_new_image(&r);
 			else if (r.method == KMETHOD_POST)
 				handle_post_new_image(&r, p, dbid);
+			else
+				send_405(&r);
+			break;
+		case (PAGE_EDIT_IMAGE):
+			if (u == NULL)
+				{
+				send_404(&r);
+				break;
+				}
+			if (r.method == KMETHOD_GET)
+				handle_get_edit_image(&r, p, dbid, u);
+			else if (r.method == KMETHOD_POST)
+				handle_post_edit_image(&r, p, dbid);
 			else
 				send_405(&r);
 			break;
