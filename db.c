@@ -259,7 +259,7 @@ db_sess_del(struct sqlbox *p, size_t dbid, int64_t cookie)
 	}
 
 void
-db_image_new(struct sqlbox *p, size_t dbid, char *title, char *alt, char *attribution, char *hash, char *format)
+db_image_new(struct sqlbox *p, size_t dbid, const char *title, const char *alt, const char *attribution, const char *hash, const char *format)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -383,7 +383,7 @@ post_free(struct post *p)
 
 // TODO make a page type
 struct post *
-db_page_get(struct sqlbox *p, size_t dbid, char *page)
+db_page_get(struct sqlbox *p, size_t dbid, const char *page)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -424,7 +424,7 @@ db_page_get(struct sqlbox *p, size_t dbid, char *page)
 	}
 
 void
-db_page_update(struct sqlbox *p, size_t dbid, char *page, char *content)
+db_page_update(struct sqlbox *p, size_t dbid, const char *page, const char *content)
 	{
 	time_t mtime = time(NULL);
 
@@ -496,7 +496,7 @@ db_post_list(struct sqlbox *p, size_t dbid, size_t stmt)
 	}
 
 struct post *
-db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, char *slug)
+db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -535,7 +535,7 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, char *slug)
 	}
 
 void
-db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *slug, char *snippet, char *content)
+db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -562,7 +562,7 @@ db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *slug,
 	}
 
 void
-db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, char *title, char *slug, char *snippet, char *content)
+db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content)
 	{
 	time_t mtime = time(NULL);
 
@@ -725,7 +725,7 @@ cocktail_free(struct cocktail *c)
 	}
 
 struct cocktail *
-db_cocktail_get(struct sqlbox *p, size_t dbid, char *slug)
+db_cocktail_get(struct sqlbox *p, size_t dbid, const char *slug)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -794,7 +794,7 @@ db_cocktail_max(struct sqlbox *p, size_t dbid)
 	}
 
 void
-db_cocktail_new(struct sqlbox *p, size_t dbid, char *title, char *slug, char *serve, char *garnish, char *drinkware, char *method, struct dynarray *ingredients)
+db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *serve, const char *garnish, const char *drinkware, const char *method, struct dynarray *ingredients)
 	{
 	struct sqlbox_parm parms[] =
 		{

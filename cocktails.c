@@ -381,7 +381,7 @@ handle_post_new_drink(struct kreq *r, struct sqlbox *p, size_t dbid)
 			}
 		}
 
-	db_cocktail_new(p, dbid, title->val, slug->val, serve->val, garnish->val, drinkware->val, method->val, ingredients);
+	db_cocktail_new(p, dbid, title->parsed.s, slug->parsed.s, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s, ingredients);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails");
@@ -444,12 +444,12 @@ handle_search(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		{
 		int found = 0;
 		struct cocktail *cocktail = cocktails->store[i];
-		if (strcasestr(cocktail->title, query->val) != NULL)
+		if (strcasestr(cocktail->title, query->parsed.s) != NULL)
 			found = 1;
 
 		if (!found)
 			for (size_t j = 0; j < cocktail->ingredients->length; j++)
-				if (strcasestr(((struct ingredient *)cocktail->ingredients->store[j])->name, query->val) != NULL)
+				if (strcasestr(((struct ingredient *)cocktail->ingredients->store[j])->name, query->parsed.s) != NULL)
 					{
 					found = 1;
 					break;

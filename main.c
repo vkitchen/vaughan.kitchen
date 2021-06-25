@@ -435,7 +435,7 @@ handle_post_new_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if ((hash = base64buf_url(digest, MD5_DIGEST_LENGTH)) == NULL)
 		errx(1, "error encoding base64");
 
-	db_image_new(p, dbid, title->val, alt->val, attribution->val, hash, "jpg");
+	db_image_new(p, dbid, title->parsed.s, alt->parsed.s, attribution->parsed.s, hash, "jpg");
 
 	// TODO delete DB entry if write fails
 	snprintf(buf, sizeof(buf), "static/img/%s.jpg", hash);
@@ -496,7 +496,7 @@ handle_post_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if ((content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_page_update(p, dbid, "cv", content->val);
+	db_page_update(p, dbid, "cv", content->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/cv");
@@ -565,7 +565,7 @@ handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_new(p, dbid, STMT_POST_NEW, title->val, slug->val, snippet->val, content->val);
+	db_post_new(p, dbid, STMT_POST_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/blag");
@@ -603,7 +603,7 @@ handle_post_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_update(p, dbid, STMT_POST_UPDATE, title->val, r->path, snippet->val, content->val);
+	db_post_update(p, dbid, STMT_POST_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
@@ -652,7 +652,7 @@ handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_new(p, dbid, STMT_RECIPE_NEW, title->val, slug->val, snippet->val, content->val);
+	db_post_new(p, dbid, STMT_RECIPE_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
@@ -690,7 +690,7 @@ handle_post_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->val, r->path, snippet->val, content->val);
+	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);
@@ -807,7 +807,7 @@ handle_login(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 		open_head(r, KHTTP_302);
 		khttp_head(r, kresps[KRESP_LOCATION], "/");
 
-		struct user *user = db_user_checkpass(p, dbid, username->val, password->val);
+		struct user *user = db_user_checkpass(p, dbid, username->parsed.s, password->parsed.s);
 		if (user != NULL)
 			{
 			cookie = arc4random();
