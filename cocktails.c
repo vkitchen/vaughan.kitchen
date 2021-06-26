@@ -37,6 +37,7 @@ struct drink_tmpl_data
 	struct khtmlreq       *req;
 	struct user           *user;
 	struct cocktail       *cocktail;
+	struct dynarray       *images;
 	};
 
 enum key
@@ -68,6 +69,7 @@ enum drink_key
 	DRINK_KEY_EDIT_COCKTAIL_LINK,
 	DRINK_KEY_EDIT_COCKTAIL_PATH,
 	DRINK_KEY_TITLE,
+	DRINK_KEY_IMAGES, /* image select */
 	DRINK_KEY_HREF,
 	DRINK_KEY_IMG,
 	DRINK_KEY_DRINKWARE,
@@ -86,6 +88,7 @@ const char *drink_keys[DRINK_KEY__MAX] =
 	"edit-cocktail-link",
 	"edit-cocktail-path",
 	"drink-title",
+	"images",
 	"drink-href",
 	"drink-img",
 	"drink-drinkware",
@@ -194,6 +197,19 @@ drink_template(size_t key, void *arg)
 		case (DRINK_KEY_TITLE):
 			khtml_puts(data->req, data->cocktail->title);
 			break;
+		case (DRINK_KEY_IMAGES):
+			khtml_attr(data->req, KELEM_OPTION, KATTR_VALUE, "0", KATTR_SELECTED, "selected", KATTR__MAX);
+			khtml_puts(data->req, "None");
+			khtml_closeelem(data->req, 1);
+			for (size_t i = 0; i < data->images->length; i++)
+				{
+				struct image *image = data->images->store[i];
+				snprintf(buf, sizeof(buf), "%lld", image->id);
+				khtml_attr(data->req, KELEM_OPTION, KATTR_VALUE, buf, KATTR__MAX);
+				khtml_puts(data->req, image->title);
+				khtml_closeelem(data->req, 1);
+				}
+			break;
 		case (DRINK_KEY_HREF):
 			snprintf(buf, sizeof(buf), "/cocktails/drinks/%s", data->cocktail->slug);
 			khtml_puts(data->req, buf);
@@ -203,7 +219,7 @@ drink_template(size_t key, void *arg)
 				khtml_puts(data->req, "/static/img/Cocktail%20Glass.svg");
 			else
 				{
-				snprintf(buf, sizeof(buf), "/static/img/%s", data->cocktail->image);
+				snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->cocktail->image);
 				khtml_puts(data->req, buf);
 				}
 			break;
@@ -415,6 +431,7 @@ handle_get_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink
 	struct drink_tmpl_data data;
 	struct ktemplate t;
 	struct khtmlreq hr;
+	struct dynarray images;
 
 	memset(&t, 0, sizeof(struct ktemplate));
 	memset(&hr, 0, sizeof(struct khtmlreq));
@@ -422,10 +439,14 @@ handle_get_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink
 	if (khtml_open(&hr, r, 0) != KCGI_OK)
 		errx(EXIT_FAILURE, "khtml_open");
 
+	dynarray_init(&images);
+	db_image_list(p, dbid, &images);
+
 	data.r = r;
 	data.req = &hr;
 	data.user = user;
 	data.cocktail = db_cocktail_get(p, dbid, drink);
+	data.images = &images;
 
 	t.key = drink_keys;
 	t.keysz = DRINK_KEY__MAX;
@@ -439,19 +460,20 @@ handle_get_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink
 static void
 handle_post_edit_drink(struct kreq *r, struct sqlbox *p, size_t dbid, char *drink)
 	{
-	struct kpair *title, *serve, *garnish, *drinkware, *method;
+	struct kpair *title, *imageid, *serve, *garnish, *drinkware, *method;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
+	    (imageid = r->fieldmap[PARAM_IMAGEID]) == NULL ||
 	    (serve = r->fieldmap[PARAM_SERVE]) == NULL ||
 	    (garnish = r->fieldmap[PARAM_GARNISH]) == NULL ||
 	    (drinkware = r->fieldmap[PARAM_DRINKWARE]) == NULL ||
 	    (method = r->fieldmap[PARAM_METHOD]) == NULL)
 		return send_400(r);
 
-	db_cocktail_update(p, dbid, drink, title->parsed.s, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s);
+	db_cocktail_update(p, dbid, drink, title->parsed.s, imageid->parsed.i, serve->parsed.s, garnish->parsed.s, drinkware->parsed.s, method->parsed.s);
 
 	open_head(r, KHTTP_302);
-	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails/drinks/%s", drink);
+	khttp_head(r, kresps[KRESP_LOCATION], "/cocktails/drinks/%s", drink); // TODO seems to be bug editing chimayo cocktail. Same with jagerbomb
 	khttp_body(r);
 	}
 

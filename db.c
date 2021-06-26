@@ -25,6 +25,7 @@
 #define USER "users.id,users.display,users.login"
 #define POST "posts.id,posts.title,posts.slug,posts.snippet,posts.ctime,posts.mtime,posts.content,images.hash"
 #define RECIPE "recipes.id,recipes.title,recipes.slug,recipes.snippet,recipes.ctime,recipes.mtime,recipes.content,images.hash"
+#define COCKTAIL "cocktails.id,cocktails.title,cocktails.slug,images.hash,cocktails.ctime,cocktails.mtime,cocktails.serve,cocktails.garnish,cocktails.drinkware,cocktails.method"
 
 struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{
@@ -65,15 +66,15 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	/* STMT_RECIPE_LIST */
 	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id ORDER BY recipes.id DESC" },
 	/* STMT_COCKTAIL_GET */
-	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails WHERE slug=?" },
+	{ .stmt = (char *)"SELECT " COCKTAIL " FROM cocktails LEFT JOIN images ON cocktails.image_id=images.id WHERE slug=?" },
 	/* STMT_COCKTAIL_NEW */
 	{ .stmt = (char *)"INSERT INTO cocktails (title,slug,serve,garnish,drinkware,method) VALUES (?,?,?,?,?,?)" },
 	/* STMT_COCKTAIL_UPDATE */
-	{ .stmt = (char *)"UPDATE cocktails SET title=?,mtime=?,serve=?,garnish=?,drinkware=?,method=? WHERE slug=?" },
+	{ .stmt = (char *)"UPDATE cocktails SET title=?,mtime=?,serve=?,garnish=?,drinkware=?,method=?,image_id=? WHERE slug=?" },
 	/* STMT_COCKTAIL_MAX */
 	{ .stmt = (char *)"SELECT MAX(id) FROM cocktails" }, // TODO INSERT RETURNING coming real soon now
 	/* STMT_COCKTAIL_LIST */
-	{ .stmt = (char *)"SELECT id,title,slug,image,ctime,mtime,serve,garnish,drinkware,method FROM cocktails ORDER BY title ASC" },
+	{ .stmt = (char *)"SELECT " COCKTAIL " FROM cocktails LEFT JOIN images ON cocktails.image_id=images.id ORDER BY cocktails.title ASC" },
 	/* STMT_INGREDIENT_NEW */
 	{ .stmt = (char *)"INSERT INTO cocktail_ingredients (name,measure,unit,cocktail_id) VALUES (?,?,?,?)" },
 	/* STMT_COCKTAIL_INGREDIENTS */
@@ -872,7 +873,7 @@ db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *sl
 	}
 
 void
-db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, const char *serve, const char *garnish, const char *drinkware, const char *method)
+db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, int64_t image_id, const char *serve, const char *garnish, const char *drinkware, const char *method)
 	{
 	time_t mtime = time(NULL);
 
@@ -884,11 +885,12 @@ db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *
 		{ .sparm = garnish, .type = SQLBOX_PARM_STRING },
 		{ .sparm = drinkware, .type = SQLBOX_PARM_STRING },
 		{ .sparm = method, .type = SQLBOX_PARM_STRING },
+		{ .iparm = image_id, .type = SQLBOX_PARM_INT },
 		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_UPDATE, 7, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_COCKTAIL_UPDATE, 8, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;

@@ -62,13 +62,14 @@ CREATE TABLE cocktails
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL
 	, slug TEXT NOT NULL UNIQUE
-	, image TEXT
 	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
 	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
 	, serve TEXT
 	, garnish TEXT
 	, drinkware TEXT
 	, method TEXT
+	, image_id INTEGER
+	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);
 
 CREATE TABLE cocktail_ingredients

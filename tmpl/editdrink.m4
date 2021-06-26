@@ -8,6 +8,13 @@ include(`tmpl/partials/doc_open.m4')
 		</label>
 		<br>
 		<label>
+			Image:
+			<select name="imageid">
+				@@images@@
+			</select>
+		</label>
+		<br>
+		<label>
 			Serve:
 			<input type="text" name="serve" value="@@drink-serve@@">
 		</label>

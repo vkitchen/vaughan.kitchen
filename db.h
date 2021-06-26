@@ -171,7 +171,7 @@ void
 db_cocktail_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *serve, const char *garnish, const char *drinkware, const char *method, struct dynarray *ingredients);
 
 void
-db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, const char *serve, const char *garnish, const char *drinkware, const char *method);
+db_cocktail_update(struct sqlbox *p, size_t dbid, const char *slug, const char *title, int64_t image_id, const char *serve, const char *garnish, const char *drinkware, const char *method);
 
 void
 db_cocktail_list(struct sqlbox *p, size_t dbid, struct dynarray *result);
