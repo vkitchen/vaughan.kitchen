@@ -439,7 +439,7 @@ handle_images(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	}
 
 static void
-handle_get_new_image(struct kreq *r)
+handle_get_new_image(struct kreq *r, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -447,6 +447,7 @@ handle_get_new_image(struct kreq *r)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_NEW_IMAGE;
+	data.user = user;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -531,7 +532,7 @@ handle_post_edit_image(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -543,6 +544,7 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_CV;
+	data.user = user;
 	data.post = post;
 	data.raw = 1;
 
@@ -552,7 +554,7 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_get_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_get_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -564,6 +566,7 @@ handle_get_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_EDIT_CV;
+	data.user = user;
 	data.post = post;
 	data.raw = 1;
 
@@ -588,7 +591,7 @@ handle_post_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -598,6 +601,7 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid)
 	dynarray_init(&posts);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_BLOG;
+	data.user = user;
 	data.posts = &posts;
 
 	db_post_list(p, dbid, STMT_POST_LIST, &posts);
@@ -608,7 +612,7 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_post(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -620,6 +624,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_POST;
+	data.user = user;
 	data.post = post;
 
 	open_response(r, KHTTP_200);
@@ -628,7 +633,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_get_new_post(struct kreq *r)
+handle_get_new_post(struct kreq *r, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -636,6 +641,7 @@ handle_get_new_post(struct kreq *r)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_NEW_POST;
+	data.user = user;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -661,7 +667,7 @@ handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -673,6 +679,7 @@ handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_EDIT_POST;
+	data.user = user;
 	data.post = post;
 	data.raw = 1;
 
@@ -699,7 +706,7 @@ handle_post_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -709,6 +716,7 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid)
 	dynarray_init(&posts);
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_RECIPES;
+	data.user = user;
 	data.posts = &posts;
 
 	db_post_list(p, dbid, STMT_RECIPE_LIST, &posts);
@@ -719,7 +727,7 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_get_new_recipe(struct kreq *r)
+handle_get_new_recipe(struct kreq *r, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -727,6 +735,7 @@ handle_get_new_recipe(struct kreq *r)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_NEW_RECIPE;
+	data.user = user;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -752,7 +761,7 @@ handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -764,6 +773,7 @@ handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_EDIT_RECIPE;
+	data.user = user;
 	data.post = post;
 	data.raw = 1;
 
@@ -790,7 +800,7 @@ handle_post_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
+handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -802,6 +812,7 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_RECIPE;
+	data.user = user;
 	data.post = post;
 
 	open_response(r, KHTTP_200);
@@ -810,7 +821,7 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	}
 
 static void
-handle_games(struct kreq *r)
+handle_games(struct kreq *r, struct user *user)
 	{
 	struct tmpl_data data;
 	struct ktemplate t;
@@ -818,6 +829,7 @@ handle_games(struct kreq *r)
 
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_GAMES;
+	data.user = user;
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -1002,7 +1014,7 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_new_image(&r);
+				handle_get_new_image(&r, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_new_image(&r, p, dbid);
 			else
@@ -1022,7 +1034,7 @@ main(void)
 				send_405(&r);
 			break;
 		case (PAGE_CV):
-			handle_cv(&r, p, dbid);
+			handle_cv(&r, p, dbid, u);
 			break;
 		case (PAGE_EDIT_CV):
 			if (u == NULL)
@@ -1031,17 +1043,17 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_edit_cv(&r, p, dbid);
+				handle_get_edit_cv(&r, p, dbid, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_edit_cv(&r, p, dbid);
 			else
 				send_405(&r);
 			break;
 		case (PAGE_BLOG):
-			handle_blog(&r, p, dbid);
+			handle_blog(&r, p, dbid, u);
 			break;
 		case (PAGE_POST):
-			handle_post(&r, p, dbid);
+			handle_post(&r, p, dbid, u);
 			break;
 		case (PAGE_NEW_POST):
 			if (u == NULL)
@@ -1050,7 +1062,7 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_new_post(&r);
+				handle_get_new_post(&r, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_new_post(&r, p, dbid);
 			else
@@ -1063,7 +1075,7 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_edit_post(&r, p, dbid);
+				handle_get_edit_post(&r, p, dbid, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_edit_post(&r, p, dbid);
 			else
@@ -1073,10 +1085,10 @@ main(void)
 			handle_cocktails(&r, p, dbid, u);
 			break;
 		case (PAGE_RECIPES):
-			handle_recipes(&r, p, dbid);
+			handle_recipes(&r, p, dbid, u);
 			break;
 		case (PAGE_RECIPE):
-			handle_recipe(&r, p, dbid);
+			handle_recipe(&r, p, dbid, u);
 			break;
 		case (PAGE_NEW_RECIPE):
 			if (u == NULL)
@@ -1085,7 +1097,7 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_new_recipe(&r);
+				handle_get_new_recipe(&r, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_new_recipe(&r, p, dbid);
 			else
@@ -1098,14 +1110,14 @@ main(void)
 				break;
 				}
 			if (r.method == KMETHOD_GET)
-				handle_get_edit_recipe(&r, p, dbid);
+				handle_get_edit_recipe(&r, p, dbid, u);
 			else if (r.method == KMETHOD_POST)
 				handle_post_edit_recipe(&r, p, dbid);
 			else
 				send_405(&r);
 			break;
 		case (PAGE_GAMES):
-			handle_games(&r);
+			handle_games(&r, u);
 			break;
 		case (PAGE_ROOMS):
 			handle_rooms(&r);
