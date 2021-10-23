@@ -117,6 +117,7 @@ enum key
 	KEY_TITLE,
 	KEY_SNIPPET,
 	KEY_MTIME,
+	KEY_IMAGE,
 	KEY_CONTENT,
 	KEY_POSTS,
 	KEY__MAX,
@@ -142,6 +143,7 @@ static const char *keys[KEY__MAX] =
 	"title",
 	"snippet",
 	"mtime",
+	"image",
 	"content", /* markdown content */
 	/* post list */
 	"posts",   /* list of posts */
@@ -255,11 +257,12 @@ template(size_t key, void *arg)
 		case (KEY_EDIT_POST_LINK):
 			if (data->user != NULL)
 				{
-				khtml_elem(data->req, KELEM_BR);
 				snprintf(buf, sizeof(buf), "/editpost/%s", data->post->slug);
 				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 				khtml_puts(data->req, "Edit Post");
 				khtml_closeelem(data->req, 1);
+				khtml_elem(data->req, KELEM_BR);
+				khtml_elem(data->req, KELEM_BR);
 				}
 			break;
 		case (KEY_EDIT_POST_PATH):
@@ -281,11 +284,12 @@ template(size_t key, void *arg)
 		case (KEY_EDIT_RECIPE_LINK):
 			if (data->user != NULL)
 				{
-				khtml_elem(data->req, KELEM_BR);
 				snprintf(buf, sizeof(buf), "/editrecipe/%s", data->post->slug);
 				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
 				khtml_puts(data->req, "Edit Recipe");
 				khtml_closeelem(data->req, 1);
+				khtml_elem(data->req, KELEM_BR);
+				khtml_elem(data->req, KELEM_BR);
 				}
 			break;
 		case (KEY_EDIT_RECIPE_PATH):
@@ -315,6 +319,10 @@ template(size_t key, void *arg)
 			khtml_puts(data->req, buf);
 			break;
 			}
+		case (KEY_IMAGE):
+			snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->post->image);
+			khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "400", KATTR__MAX);
+			break;
 		case (KEY_CONTENT):
 			if (data->raw)
 				khttp_puts(data->r, data->post->content);
