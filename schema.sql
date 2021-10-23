@@ -39,6 +39,7 @@ CREATE TABLE posts
 	, content TEXT NOT NULL
 	, user_id INTEGER NOT NULL -- author
 	, image_id INTEGER
+	, published BOOLEAN NOT NULL DEFAULT(false)
 	, FOREIGN KEY(user_id) REFERENCES users(id)
 	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);
@@ -54,6 +55,7 @@ CREATE TABLE recipes
 	, content TEXT NOT NULL
 	, user_id INTEGER NOT NULL -- author
 	, image_id INTEGER
+	, published BOOLEAN NOT NULL DEFAULT(false)
 	, FOREIGN KEY(user_id) REFERENCES users(id)
 	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);

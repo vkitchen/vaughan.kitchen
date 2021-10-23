@@ -119,6 +119,7 @@ enum key
 	KEY_MTIME,
 	KEY_IMAGE,
 	KEY_CONTENT,
+	KEY_PUBLISHED,
 	KEY_POSTS,
 	KEY__MAX,
 	};
@@ -145,6 +146,7 @@ static const char *keys[KEY__MAX] =
 	"mtime",
 	"image",
 	"content", /* markdown content */
+	"published",
 	/* post list */
 	"posts",   /* list of posts */
 	};
@@ -163,6 +165,9 @@ template(size_t key, void *arg)
 	struct lowdown_opts opts;
 	char *obuf;
 	size_t obufsz;
+
+	struct post *post;
+	int has_post = 0;
 
 	switch (key)
 		{
@@ -323,6 +328,10 @@ template(size_t key, void *arg)
 			snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->post->image);
 			khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "400", KATTR__MAX);
 			break;
+		case (KEY_PUBLISHED):
+			if (data->post->published)
+				khtml_puts(data->req, " checked");
+			break;
 		case (KEY_CONTENT):
 			if (data->raw)
 				khttp_puts(data->r, data->post->content);
@@ -352,36 +361,46 @@ template(size_t key, void *arg)
 				}
 			break;
 		case (KEY_POSTS):
-			if (data->posts == NULL)
-				khtml_puts(data->req, "Nothing here yet");
-			else
+			// link to each post
+			for (size_t i = 0; i < data->posts->length; i++)
 				{
-				khtml_elem(data->req, KELEM_UL);
-				// link to each post
-				for (size_t i = 0; i < data->posts->length; i++)
+				post = data->posts->store[i];
+
+				if (!post->published && data->user == NULL)
+					continue;
+
+				// first post
+				if (!has_post)
+					khtml_elem(data->req, KELEM_UL);
+
+				khtml_elem(data->req, KELEM_LI);
+				// TODO this seems hacky
+				if (data->page == PAGE_BLOG)
+					snprintf(buf, sizeof(buf), "/post/%s", post->slug);
+				if (data->page == PAGE_RECIPES)
+					snprintf(buf, sizeof(buf), "/recipe/%s", post->slug);
+				khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
+				khtml_puts(data->req, post->title);
+				if (!post->published)
+					khtml_puts(data->req, " (draft)");
+				khtml_closeelem(data->req, 1);
+				if (post->image != NULL)
 					{
-					khtml_elem(data->req, KELEM_LI);
-					// TODO this seems hacky
-					if (data->page == PAGE_BLOG)
-						snprintf(buf, sizeof(buf), "/post/%s", ((struct post *)data->posts->store[i])->slug);
-					if (data->page == PAGE_RECIPES)
-						snprintf(buf, sizeof(buf), "/recipe/%s", ((struct post *)data->posts->store[i])->slug);
+					khtml_elem(data->req, KELEM_BR);
+					// href still in buf
 					khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
-					khtml_puts(data->req, ((struct post *)data->posts->store[i])->title);
-					khtml_closeelem(data->req, 1);
-					if (((struct post *)data->posts->store[i])->image != NULL)
-						{
-						khtml_elem(data->req, KELEM_BR);
-						// href still in buf
-						khtml_attr(data->req, KELEM_A, KATTR_HREF, buf, KATTR__MAX);
-						snprintf(buf, sizeof(buf), "/static/img/%s.jpg", ((struct post *)data->posts->store[i])->image);
-						khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "200", KATTR__MAX);
-						khtml_closeelem(data->req, 1); /* </a> */
-						}
-					khtml_closeelem(data->req, 1);
+					snprintf(buf, sizeof(buf), "/static/img/%s.jpg", post->image);
+					khtml_attr(data->req, KELEM_IMG, KATTR_SRC, buf, KATTR_WIDTH, "200", KATTR__MAX);
+					khtml_closeelem(data->req, 1); /* </a> */
 					}
 				khtml_closeelem(data->req, 1);
+				has_post = 1;
 				}
+			// got opened
+			if (has_post)
+				khtml_closeelem(data->req, 1);
+			if (!has_post)
+				khtml_puts(data->req, "Nothing here yet");
 			break;
 		default:
 			abort();
@@ -630,6 +649,9 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	if (post == NULL)
 		return send_404(r);
 
+	if (!post->published && user == NULL)
+		return send_404(r);
+
 	memset(&data, 0, sizeof(struct tmpl_data));
 	data.page = PAGE_POST;
 	data.user = user;
@@ -659,7 +681,8 @@ handle_get_new_post(struct kreq *r, struct user *user)
 static void
 handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
-	struct kpair *title, *slug, *snippet, *content;
+	struct kpair *title, *slug, *snippet, *content, *pub;
+	int published = 0;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
 	    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
@@ -667,7 +690,11 @@ handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_new(p, dbid, STMT_POST_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s);
+	pub = r->fieldmap[PARAM_PUBLISHED];
+	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
+		published = 1;
+
+	db_post_new(p, dbid, STMT_POST_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/blag");
@@ -699,14 +726,19 @@ handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user 
 static void
 handle_post_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
-	struct kpair *title, *snippet, *content;
+	struct kpair *title, *snippet, *content, *pub;
+	int published = 0;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
 	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_update(p, dbid, STMT_POST_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s);
+	pub = r->fieldmap[PARAM_PUBLISHED];
+	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
+		published = 1;
+
+	db_post_update(p, dbid, STMT_POST_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
@@ -753,7 +785,8 @@ handle_get_new_recipe(struct kreq *r, struct user *user)
 static void
 handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
-	struct kpair *title, *slug, *snippet, *content;
+	struct kpair *title, *slug, *snippet, *content, *pub;
+	int published = 0;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
 	    (slug = r->fieldmap[PARAM_SLUG]) == NULL ||
@@ -761,7 +794,11 @@ handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_new(p, dbid, STMT_RECIPE_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s);
+	pub = r->fieldmap[PARAM_PUBLISHED];
+	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
+		published = 1;
+
+	db_post_new(p, dbid, STMT_RECIPE_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
@@ -793,14 +830,19 @@ handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct use
 static void
 handle_post_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	{
-	struct kpair *title, *snippet, *content;
+	struct kpair *title, *snippet, *content, *pub;
+	int published = 0;
 
 	if ((title = r->fieldmap[PARAM_TITLE]) == NULL ||
 	    (snippet = r->fieldmap[PARAM_SNIPPET]) == NULL ||
 	    (content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s);
+	pub = r->fieldmap[PARAM_PUBLISHED];
+	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
+		published = 1;
+
+	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);

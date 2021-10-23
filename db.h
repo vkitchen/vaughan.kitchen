@@ -68,6 +68,7 @@ struct post
 	time_t     mtime;
 	char      *content;
 	char      *image;
+	int64_t    published;
 	};
 
 struct ingredient
@@ -149,10 +150,10 @@ struct post *
 db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug);
 
 void
-db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content);
+db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published);
 
 void
-db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content);
+db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published);
 
 /*************/
 /* COCKTAILS */

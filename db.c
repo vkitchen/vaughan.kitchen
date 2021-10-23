@@ -23,8 +23,8 @@
 #include "dynarray.h"
 
 #define USER "users.id,users.display,users.login"
-#define POST "posts.id,posts.title,posts.slug,posts.snippet,posts.ctime,posts.mtime,posts.content,images.hash"
-#define RECIPE "recipes.id,recipes.title,recipes.slug,recipes.snippet,recipes.ctime,recipes.mtime,recipes.content,images.hash"
+#define POST "posts.id,posts.title,posts.slug,posts.snippet,posts.ctime,posts.mtime,posts.content,images.hash,posts.published"
+#define RECIPE "recipes.id,recipes.title,recipes.slug,recipes.snippet,recipes.ctime,recipes.mtime,recipes.content,images.hash,recipes.published"
 #define COCKTAIL "cocktails.id,cocktails.title,cocktails.slug,images.hash,cocktails.ctime,cocktails.mtime,cocktails.serve,cocktails.garnish,cocktails.drinkware,cocktails.method"
 
 struct sqlbox_pstmt pstmts[STMT__MAX] =
@@ -52,17 +52,17 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	/* STMT_POST_GET */
 	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id WHERE slug=?" },
 	/* STMT_POST_NEW */
-	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
+	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id,published) VALUES (?,?,?,?,1,?)" },
 	/* STMT_POST_UPDATE */
-	{ .stmt = (char *)"UPDATE posts SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
+	{ .stmt = (char *)"UPDATE posts SET title=?,snippet=?,mtime=?,content=?,published=? WHERE slug=?" },
 	/* STMT_POST_LIST */
 	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id ORDER BY posts.id DESC" },
 	/* STMT_RECIPE_GET */
 	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id WHERE slug=?" },
 	/* STMT_RECIPE_NEW */
-	{ .stmt = (char *)"INSERT INTO recipes (title,slug,snippet,content,user_id) VALUES (?,?,?,?,1)" },
+	{ .stmt = (char *)"INSERT INTO recipes (title,slug,snippet,content,user_id,published) VALUES (?,?,?,?,1,?)" },
 	/* STMT_RECIPE_UPDATE */
-	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=? WHERE slug=?" },
+	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=?,published=? WHERE slug=?" },
 	/* STMT_RECIPE_LIST */
 	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id ORDER BY recipes.id DESC" },
 	/* STMT_COCKTAIL_GET */
@@ -427,6 +427,7 @@ post_fill(struct post *post, const struct sqlbox_parmset *res)
 	scan_int(&post->mtime, res, i++);
 	scan_string(&post->content, res, i++);
 	scan_string(&post->image, res, i++);
+	scan_int(&post->published, res, i++);
 	}
 
 void
@@ -585,7 +586,7 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug)
 	}
 
 void
-db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content)
+db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -593,10 +594,11 @@ db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const
 		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
 		{ .sparm = snippet, .type = SQLBOX_PARM_STRING },
 		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		{ .iparm = published, .type = SQLBOX_PARM_INT },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 4, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 5, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -612,7 +614,7 @@ db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const
 	}
 
 void
-db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content)
+db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published)
 	{
 	time_t mtime = time(NULL);
 
@@ -622,11 +624,12 @@ db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, co
 		{ .sparm = snippet, .type = SQLBOX_PARM_STRING },
 		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
 		{ .sparm = content, .type = SQLBOX_PARM_STRING },
+		{ .iparm = published, .type = SQLBOX_PARM_INT },
 		{ .sparm = slug, .type = SQLBOX_PARM_STRING },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 5, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 6, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;

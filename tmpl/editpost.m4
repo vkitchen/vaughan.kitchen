@@ -16,6 +16,11 @@ include(`tmpl/partials/doc_open.m4')
 			<textarea name="content">@@content@@</textarea>
 		</label>
 		<br>
+		<label>
+			Published:
+			<input type="checkbox" name="published" @@published@@>
+		</label>
+		<br>
 		<button>
 			Submit
 		</button>
