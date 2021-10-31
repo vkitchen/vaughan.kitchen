@@ -740,7 +740,7 @@ cocktail_fill(struct cocktail *cocktail, const struct sqlbox_parmset *res)
 	scan_int(&cocktail->id, res, i++);
 	scan_string(&cocktail->title, res, i++);
 	scan_string(&cocktail->slug, res, i++);
-	scan_string(&cocktail->image, res, i++);
+	scan_string(&cocktail->image_hash, res, i++);
 	scan_int(&cocktail->ctime, res, i++);
 	scan_int(&cocktail->mtime, res, i++);
 	scan_string(&cocktail->serve, res, i++);
@@ -756,7 +756,7 @@ cocktail_free(struct cocktail *c)
 		return;
 	free(c->title);
 	free(c->slug);
-	free(c->image);
+	free(c->image_hash);
 	free(c->serve);
 	free(c->garnish);
 	free(c->drinkware);
@@ -799,6 +799,10 @@ db_cocktail_get(struct sqlbox *p, size_t dbid, const char *slug)
 	memset(cocktail, 0, sizeof(struct cocktail));
 
 	cocktail_fill(cocktail, res);
+
+	if (cocktail->image_hash != NULL && cocktail->image_hash[0] != '\0')
+		cocktail->image = db_image_get(p, dbid, cocktail->image_hash);
+
 	cocktail->ingredients = kmalloc(sizeof(struct dynarray));
 	dynarray_init(cocktail->ingredients);
 	db_ingredients_get(p, dbid, cocktail->ingredients, cocktail->id);

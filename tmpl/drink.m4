@@ -15,6 +15,7 @@ include(`tmpl/partials/doc_open.m4')
 		<a href="@@drink-href@@" class="drink__recipe-link">
 			<img src="@@drink-img@@">
 		</a>
+		@@drink-img-attribution@@
 	</div><!--
 	--><div class="drink__recipe">
 		<p>Drinkware: @@drink-drinkware@@</p>

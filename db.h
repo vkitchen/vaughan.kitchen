@@ -84,7 +84,8 @@ struct cocktail
 	int64_t                  id;
 	char                    *title;
 	char                    *slug;
-	char                    *image;
+	char                    *image_hash;
+	struct image            *image;
 	time_t                   ctime;
 	time_t                   mtime;
 	char                    *serve;

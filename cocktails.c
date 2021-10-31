@@ -72,6 +72,7 @@ enum drink_key
 	DRINK_KEY_IMAGES, /* image select */
 	DRINK_KEY_HREF,
 	DRINK_KEY_IMG,
+	DRINK_KEY_IMG_ATTRIBUTION,
 	DRINK_KEY_DRINKWARE,
 	DRINK_KEY_SERVE,
 	DRINK_KEY_GARNISH,
@@ -91,6 +92,7 @@ const char *drink_keys[DRINK_KEY__MAX] =
 	"images",
 	"drink-href",
 	"drink-img",
+	"drink-img-attribution",
 	"drink-drinkware",
 	"drink-serve",
 	"drink-garnish",
@@ -215,13 +217,17 @@ drink_template(size_t key, void *arg)
 			khtml_puts(data->req, buf);
 			break;
 		case (DRINK_KEY_IMG):
-			if (data->cocktail->image == NULL || data->cocktail->image[0] == '\0')
+			if (data->cocktail->image_hash == NULL || data->cocktail->image_hash[0] == '\0')
 				khtml_puts(data->req, "/static/img/Cocktail%20Glass.svg");
 			else
 				{
-				snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->cocktail->image);
+				snprintf(buf, sizeof(buf), "/static/img/%s.jpg", data->cocktail->image_hash);
 				khtml_puts(data->req, buf);
 				}
+			break;
+		case (DRINK_KEY_IMG_ATTRIBUTION):
+			if (data->cocktail->image != NULL && data->cocktail->image->attribution != NULL)
+				khtml_puts(data->req, data->cocktail->image->attribution);
 			break;
 		case (DRINK_KEY_DRINKWARE):
 			if (data->cocktail->drinkware != NULL)
