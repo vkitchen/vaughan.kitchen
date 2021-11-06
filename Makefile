@@ -66,7 +66,7 @@ clean:
 	rm -f main main.o $(OBJECTS) $(COMPTEMPS)
 
 upload:
-	rsync -avz --include='main' --include='static/***' --exclude='*' . deltacephei:~/vaughan.kitchen
+	rsync -avz --include='main' --include='migrations/***' --include='static/***' --exclude='*' . deltacephei:~/vaughan.kitchen
 
 dev:
 	rsync -av --include='main' --include='static/***' --exclude='*' . /var/www/htdocs/vaughan.kitchen
