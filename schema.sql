@@ -22,13 +22,6 @@ CREATE TABLE images
 	, format TEXT NOT NULL -- 'jpg', 'png', 'gif'
 	);
 
-CREATE TABLE pages
-	( id INTEGER PRIMARY KEY AUTOINCREMENT
-	, title TEXT NOT NULL UNIQUE
-	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
-	, content TEXT NOT NULL
-	);
-
 CREATE TABLE posts
 	( id INTEGER PRIMARY KEY AUTOINCREMENT
 	, title TEXT NOT NULL
@@ -40,22 +33,7 @@ CREATE TABLE posts
 	, user_id INTEGER NOT NULL -- author
 	, image_id INTEGER
 	, published BOOLEAN NOT NULL DEFAULT(false)
-	, FOREIGN KEY(user_id) REFERENCES users(id)
-	, FOREIGN KEY(image_id) REFERENCES images(id)
-	);
-
--- Same format as a post (at least for now)
-CREATE TABLE recipes
-	( id INTEGER PRIMARY KEY AUTOINCREMENT
-	, title TEXT NOT NULL
-	, slug TEXT NOT NULL UNIQUE
-	, snippet TEXT
-	, ctime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- creation: unix time
-	, mtime INTEGER NOT NULL DEFAULT(strftime('%s', 'now')) -- modified: unix time
-	, content TEXT NOT NULL
-	, user_id INTEGER NOT NULL -- author
-	, image_id INTEGER
-	, published BOOLEAN NOT NULL DEFAULT(false)
+	, category TEXT
 	, FOREIGN KEY(user_id) REFERENCES users(id)
 	, FOREIGN KEY(image_id) REFERENCES images(id)
 	);

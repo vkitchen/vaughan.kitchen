@@ -14,16 +14,10 @@ enum stmt
 	STMT_IMAGE_NEW,
 	STMT_IMAGE_UPDATE,
 	STMT_IMAGE_LIST,
-	STMT_PAGE_GET,
-	STMT_PAGE_UPDATE,
 	STMT_POST_GET,
 	STMT_POST_NEW,
 	STMT_POST_UPDATE,
 	STMT_POST_LIST,
-	STMT_RECIPE_GET,
-	STMT_RECIPE_NEW,
-	STMT_RECIPE_UPDATE,
-	STMT_RECIPE_LIST,
 	STMT_COCKTAIL_GET,
 	STMT_COCKTAIL_NEW,
 	STMT_COCKTAIL_UPDATE,
@@ -138,23 +132,17 @@ db_image_list(struct sqlbox *p, size_t dbid, struct dynarray *result);
 struct image *
 db_image_get(struct sqlbox *p, size_t dbid, const char *hash);
 
-struct post *
-db_page_get(struct sqlbox *p, size_t dbid, const char *page);
-
 void
-db_page_update(struct sqlbox *p, size_t dbid, const char *page, const char *content);
-
-void
-db_post_list(struct sqlbox *p, size_t dbid, size_t stmt, struct dynarray *result);
+db_post_list(struct sqlbox *p, size_t dbid, const char *category, struct dynarray *result);
 
 struct post *
-db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug);
+db_post_get(struct sqlbox *p, size_t dbid, const char *slug);
 
 void
-db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published);
+db_post_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *snippet, const char *content, int published, const char *category);
 
 void
-db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published);
+db_post_update(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *snippet, const char *content, int published);
 
 /*************/
 /* COCKTAILS */

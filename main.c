@@ -565,7 +565,7 @@ handle_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_page_get(p, dbid, "cv");
+	struct post *post = db_post_get(p, dbid, "cv");
 	if (post == NULL)
 		return send_500(r);
 
@@ -587,7 +587,7 @@ handle_get_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *u
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_page_get(p, dbid, "cv");
+	struct post *post = db_post_get(p, dbid, "cv");
 	if (post == NULL)
 		return send_404(r);
 
@@ -610,7 +610,7 @@ handle_post_edit_cv(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if ((content = r->fieldmap[PARAM_CONTENT]) == NULL)
 		return send_400(r);
 
-	db_page_update(p, dbid, "cv", content->parsed.s);
+	db_post_update(p, dbid, "cv", "cv", "", content->parsed.s, 1);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/cv");
@@ -631,7 +631,7 @@ handle_blog(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	data.user = user;
 	data.posts = &posts;
 
-	db_post_list(p, dbid, STMT_POST_LIST, &posts);
+	db_post_list(p, dbid, "blog", &posts);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -645,7 +645,7 @@ handle_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
+	struct post *post = db_post_get(p, dbid, r->path);
 	if (post == NULL)
 		return send_404(r);
 
@@ -694,7 +694,7 @@ handle_post_new_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
 		published = 1;
 
-	db_post_new(p, dbid, STMT_POST_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published);
+	db_post_new(p, dbid, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published, "blog");
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/blag");
@@ -708,7 +708,7 @@ handle_get_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid, struct user 
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_post_get(p, dbid, STMT_POST_GET, r->path);
+	struct post *post = db_post_get(p, dbid, r->path);
 	if (post == NULL)
 		return send_404(r);
 
@@ -738,7 +738,7 @@ handle_post_edit_post(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
 		published = 1;
 
-	db_post_update(p, dbid, STMT_POST_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
+	db_post_update(p, dbid, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/post/%s", r->path);
@@ -759,7 +759,7 @@ handle_recipes(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	data.user = user;
 	data.posts = &posts;
 
-	db_post_list(p, dbid, STMT_RECIPE_LIST, &posts);
+	db_post_list(p, dbid, "recipes", &posts);
 
 	open_response(r, KHTTP_200);
 	open_template(&data, &t, &hr, r);
@@ -798,7 +798,7 @@ handle_post_new_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
 		published = 1;
 
-	db_post_new(p, dbid, STMT_RECIPE_NEW, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published);
+	db_post_new(p, dbid, title->parsed.s, slug->parsed.s, snippet->parsed.s, content->parsed.s, published, "recipes");
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipes");
@@ -812,7 +812,7 @@ handle_get_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct use
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
+	struct post *post = db_post_get(p, dbid, r->path);
 	if (post == NULL)
 		return send_404(r);
 
@@ -842,7 +842,7 @@ handle_post_edit_recipe(struct kreq *r, struct sqlbox *p, size_t dbid)
 	if (pub != NULL && strcmp(pub->parsed.s, "on") == 0)
 		published = 1;
 
-	db_post_update(p, dbid, STMT_RECIPE_UPDATE, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
+	db_post_update(p, dbid, title->parsed.s, r->path, snippet->parsed.s, content->parsed.s, published);
 
 	open_head(r, KHTTP_302);
 	khttp_head(r, kresps[KRESP_LOCATION], "/recipe/%s", r->path);
@@ -856,7 +856,7 @@ handle_recipe(struct kreq *r, struct sqlbox *p, size_t dbid, struct user *user)
 	struct ktemplate t;
 	struct khtmlreq hr;
 
-	struct post *post = db_post_get(p, dbid, STMT_RECIPE_GET, r->path);
+	struct post *post = db_post_get(p, dbid, r->path);
 	if (post == NULL)
 		return send_404(r);
 

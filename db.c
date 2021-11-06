@@ -24,7 +24,6 @@
 
 #define USER "users.id,users.display,users.login"
 #define POST "posts.id,posts.title,posts.slug,posts.snippet,posts.ctime,posts.mtime,posts.content,images.hash,posts.published"
-#define RECIPE "recipes.id,recipes.title,recipes.slug,recipes.snippet,recipes.ctime,recipes.mtime,recipes.content,images.hash,recipes.published"
 #define COCKTAIL "cocktails.id,cocktails.title,cocktails.slug,images.hash,cocktails.ctime,cocktails.mtime,cocktails.serve,cocktails.garnish,cocktails.drinkware,cocktails.method"
 
 struct sqlbox_pstmt pstmts[STMT__MAX] =
@@ -45,26 +44,14 @@ struct sqlbox_pstmt pstmts[STMT__MAX] =
 	{ .stmt = (char *)"UPDATE images set title=?,alt=?,attribution=? WHERE hash=?" }, // TODO add mtime
 	/* STMT_IMAGE_LIST */
 	{ .stmt = (char *)"SELECT id,title,alt,attribution,ctime,hash,format FROM images ORDER BY id ASC" },
-	/* STMT_PAGE_GET */
-	{ .stmt = (char *)"SELECT mtime,content FROM pages WHERE title=?" },
-	/* STMT_PAGE_UPDATE */
-	{ .stmt = (char *)"UPDATE pages SET mtime=?,content=? WHERE title=?" },
 	/* STMT_POST_GET */
 	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id WHERE slug=?" },
 	/* STMT_POST_NEW */
-	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id,published) VALUES (?,?,?,?,1,?)" },
+	{ .stmt = (char *)"INSERT INTO posts (title,slug,snippet,content,user_id,published,category) VALUES (?,?,?,?,1,?,?)" },
 	/* STMT_POST_UPDATE */
 	{ .stmt = (char *)"UPDATE posts SET title=?,snippet=?,mtime=?,content=?,published=? WHERE slug=?" },
 	/* STMT_POST_LIST */
-	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id ORDER BY posts.id DESC" },
-	/* STMT_RECIPE_GET */
-	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id WHERE slug=?" },
-	/* STMT_RECIPE_NEW */
-	{ .stmt = (char *)"INSERT INTO recipes (title,slug,snippet,content,user_id,published) VALUES (?,?,?,?,1,?)" },
-	/* STMT_RECIPE_UPDATE */
-	{ .stmt = (char *)"UPDATE recipes SET title=?,snippet=?,mtime=?,content=?,published=? WHERE slug=?" },
-	/* STMT_RECIPE_LIST */
-	{ .stmt = (char *)"SELECT " RECIPE " FROM recipes LEFT JOIN images ON recipes.image_id=images.id ORDER BY recipes.id DESC" },
+	{ .stmt = (char *)"SELECT " POST " FROM posts LEFT JOIN images ON posts.image_id=images.id WHERE category=? ORDER BY posts.id DESC" },
 	/* STMT_COCKTAIL_GET */
 	{ .stmt = (char *)"SELECT " COCKTAIL " FROM cocktails LEFT JOIN images ON cocktails.image_id=images.id WHERE slug=?" },
 	/* STMT_COCKTAIL_NEW */
@@ -443,82 +430,16 @@ post_free(struct post *p)
 	free(p);
 	}
 
-// TODO make a page type
-struct post *
-db_page_get(struct sqlbox *p, size_t dbid, const char *page)
+void
+db_post_list(struct sqlbox *p, size_t dbid, const char *category, struct dynarray *result)
 	{
 	struct sqlbox_parm parms[] =
 		{
-		{ .sparm = page, .type = SQLBOX_PARM_STRING },
+		{ .sparm = category, .type = SQLBOX_PARM_STRING },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_PAGE_GET, 1, parms, 0)))
-		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	const struct sqlbox_parmset *res;
-	if ((res = sqlbox_step(p, stmtid)) == NULL)
-		errx(EXIT_FAILURE, "sqlbox_step");
-
-	if (res->code != SQLBOX_CODE_OK)
-		errx(EXIT_FAILURE, "res.code");
-
-	// no results
-	if (res->psz == 0)
-		{
-		if (!sqlbox_finalise(p, stmtid))
-			errx(EXIT_FAILURE, "sqlbox_finalise");
-
-		return NULL;
-		}
-
-	struct post *post = kmalloc(sizeof(struct post));
-	memset(post, 0, sizeof(struct post));
-
-	scan_int(&post->mtime, res, 0);
-	scan_string(&post->content, res, 1);
-
-	// finalise
-	if (!sqlbox_finalise(p, stmtid))
-		errx(EXIT_FAILURE, "sqlbox_finalise");
-
-	return post;
-	}
-
-void
-db_page_update(struct sqlbox *p, size_t dbid, const char *page, const char *content)
-	{
-	time_t mtime = time(NULL);
-
-	struct sqlbox_parm parms[] =
-		{
-		{ .iparm = mtime, .type = SQLBOX_PARM_INT },
-		{ .sparm = content, .type = SQLBOX_PARM_STRING },
-		{ .sparm = page, .type = SQLBOX_PARM_STRING },
-		};
-
-	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_PAGE_UPDATE, 3, parms, 0)))
-		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
-
-	const struct sqlbox_parmset *res;
-	if ((res = sqlbox_step(p, stmtid)) == NULL)
-		errx(EXIT_FAILURE, "sqlbox_step");
-
-	if (res->code != SQLBOX_CODE_OK)
-		errx(EXIT_FAILURE, "res.code");
-
-	// finalise
-	if (!sqlbox_finalise(p, stmtid))
-		errx(EXIT_FAILURE, "sqlbox_finalise");
-	}
-
-// TODO restrict statements
-void
-db_post_list(struct sqlbox *p, size_t dbid, size_t stmt, struct dynarray *result)
-	{
-	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 0, NULL, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_POST_LIST, 1, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -547,7 +468,7 @@ db_post_list(struct sqlbox *p, size_t dbid, size_t stmt, struct dynarray *result
 	}
 
 struct post *
-db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug)
+db_post_get(struct sqlbox *p, size_t dbid, const char *slug)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -555,7 +476,7 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug)
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 1, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_POST_GET, 1, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -586,7 +507,7 @@ db_post_get(struct sqlbox *p, size_t dbid, size_t stmt, const char *slug)
 	}
 
 void
-db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published)
+db_post_new(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *snippet, const char *content, int published, const char *category)
 	{
 	struct sqlbox_parm parms[] =
 		{
@@ -595,10 +516,11 @@ db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const
 		{ .sparm = snippet, .type = SQLBOX_PARM_STRING },
 		{ .sparm = content, .type = SQLBOX_PARM_STRING },
 		{ .iparm = published, .type = SQLBOX_PARM_INT },
+		{ .sparm = category, .type = SQLBOX_PARM_STRING },
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 5, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_POST_NEW, 6, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
@@ -614,7 +536,7 @@ db_post_new(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const
 	}
 
 void
-db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, const char *slug, const char *snippet, const char *content, int published)
+db_post_update(struct sqlbox *p, size_t dbid, const char *title, const char *slug, const char *snippet, const char *content, int published)
 	{
 	time_t mtime = time(NULL);
 
@@ -629,7 +551,7 @@ db_post_update(struct sqlbox *p, size_t dbid, size_t stmt, const char *title, co
 		};
 
 	size_t stmtid;
-	if (!(stmtid = sqlbox_prepare_bind(p, dbid, stmt, 6, parms, 0)))
+	if (!(stmtid = sqlbox_prepare_bind(p, dbid, STMT_POST_UPDATE, 6, parms, 0)))
 		errx(EXIT_FAILURE, "sqlbox_prepare_bind");
 
 	const struct sqlbox_parmset *res;
