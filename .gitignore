@@ -4,3 +4,4 @@ db/
 static/public/
 static/img/
 tmpl/*.html
+out/

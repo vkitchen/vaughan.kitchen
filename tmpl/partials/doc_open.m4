@@ -14,10 +14,10 @@
 				</a>
 			</div><!--
 			--><ul class="nav">
-				<li><a href="/cv">Résumé</a></li>
-				<li><a href="/blag">Prog Blog</a></li>
-				<li><a href="/cocktails">Cocktails</a></li>
-				<li><a href="/recipes">Recipes</a></li>
-				<li><a href="/games">Games</a></li>
+				<li><a href="/resume.html">Résumé</a></li>
+				<!--<li><a href="/blag">Prog Blog</a></li>-->
+				<!--<li><a href="/cocktails">Cocktails</a></li>-->
+				<!--<li><a href="/recipes">Recipes</a></li>-->
+				<li><a href="/games.html">Games</a></li>
 			</ul>
 		</nav>
