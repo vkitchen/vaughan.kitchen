@@ -3,14 +3,12 @@
 
 <h2>Personal</h2>
 <fieldset>
-<p>Programming language enthusiast, NZ's 4th best chilli eater 2021, brandy connoisseur, and roller skating fiend</p>
+<p>Programming language enthusiast, NZ's 4th best chilli eater 2021, brandy drinker, roller skater, festival goer</p>
 
-<p>Proficient in Elm, Go, C, Fortran, and Javascript (Vanilla, jQuery, React, React Native, Vue)</p>
-<p>Good at Bash, C++, Perl, R, and OCaml</p>
-<p>Touched APL, Erlang, Chicken Scheme, Typescript, and Haskell</p>
-<p>Made eye contact with Rust, and C#</p>
-<p>Doesn't like admitting knowing Java, and Python</p>
-<p>Interested in work with functional languages or search engines</p>
+<p>Languages used Professionally: Go, Ruby, Javascript, Shell</p>
+<p>Languages used Researchly: C++, Zig, Python, R</p>
+<p>Languages used Hobbily: C, Rust, Fortran, Perl, Elm, OCaml, Erlang, Elixir</p>
+<p>Worked in frontend, backend, mobile, operations, and systems</p>
 </fieldset>
 
 <h2>Selected Works</h2>
